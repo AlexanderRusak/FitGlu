@@ -1,0 +1,966 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		708E05762CF352A500489532 /* FitGlu Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 708E05752CF352A500489532 /* FitGlu Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		708E05602CF352A500489532 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 708E05472CF352A400489532 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 708E054E2CF352A400489532;
+			remoteInfo = FitGlu;
+		};
+		708E056A2CF352A500489532 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 708E05472CF352A400489532 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 708E054E2CF352A400489532;
+			remoteInfo = FitGlu;
+		};
+		708E05772CF352A500489532 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 708E05472CF352A400489532 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 708E05742CF352A500489532;
+			remoteInfo = "FitGlu Watch App";
+		};
+		708E05882CF352A500489532 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 708E05472CF352A400489532 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 708E05742CF352A500489532;
+			remoteInfo = "FitGlu Watch App";
+		};
+		708E05922CF352A500489532 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 708E05472CF352A400489532 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 708E05742CF352A500489532;
+			remoteInfo = "FitGlu Watch App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		708E059E2CF352A500489532 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				708E05762CF352A500489532 /* FitGlu Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		708E054F2CF352A400489532 /* FitGlu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FitGlu.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		708E055F2CF352A500489532 /* FitGluTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FitGluTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		708E05692CF352A500489532 /* FitGluUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FitGluUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		708E05752CF352A500489532 /* FitGlu Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "FitGlu Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		708E05872CF352A500489532 /* FitGlu Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "FitGlu Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		708E05912CF352A500489532 /* FitGlu Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "FitGlu Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		708E05512CF352A400489532 /* FitGlu */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = FitGlu;
+			sourceTree = "<group>";
+		};
+		708E05622CF352A500489532 /* FitGluTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = FitGluTests;
+			sourceTree = "<group>";
+		};
+		708E056C2CF352A500489532 /* FitGluUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = FitGluUITests;
+			sourceTree = "<group>";
+		};
+		708E05792CF352A500489532 /* FitGlu Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "FitGlu Watch App";
+			sourceTree = "<group>";
+		};
+		708E058A2CF352A500489532 /* FitGlu Watch AppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "FitGlu Watch AppTests";
+			sourceTree = "<group>";
+		};
+		708E05942CF352A500489532 /* FitGlu Watch AppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "FitGlu Watch AppUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		708E054C2CF352A400489532 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E055C2CF352A500489532 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E05662CF352A500489532 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E05722CF352A500489532 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E05842CF352A500489532 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E058E2CF352A500489532 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		708E05462CF352A400489532 = {
+			isa = PBXGroup;
+			children = (
+				708E05512CF352A400489532 /* FitGlu */,
+				708E05622CF352A500489532 /* FitGluTests */,
+				708E056C2CF352A500489532 /* FitGluUITests */,
+				708E05792CF352A500489532 /* FitGlu Watch App */,
+				708E058A2CF352A500489532 /* FitGlu Watch AppTests */,
+				708E05942CF352A500489532 /* FitGlu Watch AppUITests */,
+				708E05502CF352A400489532 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		708E05502CF352A400489532 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				708E054F2CF352A400489532 /* FitGlu.app */,
+				708E055F2CF352A500489532 /* FitGluTests.xctest */,
+				708E05692CF352A500489532 /* FitGluUITests.xctest */,
+				708E05752CF352A500489532 /* FitGlu Watch App.app */,
+				708E05872CF352A500489532 /* FitGlu Watch AppTests.xctest */,
+				708E05912CF352A500489532 /* FitGlu Watch AppUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		708E054E2CF352A400489532 /* FitGlu */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 708E059F2CF352A500489532 /* Build configuration list for PBXNativeTarget "FitGlu" */;
+			buildPhases = (
+				708E054B2CF352A400489532 /* Sources */,
+				708E054C2CF352A400489532 /* Frameworks */,
+				708E054D2CF352A400489532 /* Resources */,
+				708E059E2CF352A500489532 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				708E05782CF352A500489532 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				708E05512CF352A400489532 /* FitGlu */,
+			);
+			name = FitGlu;
+			packageProductDependencies = (
+			);
+			productName = FitGlu;
+			productReference = 708E054F2CF352A400489532 /* FitGlu.app */;
+			productType = "com.apple.product-type.application";
+		};
+		708E055E2CF352A500489532 /* FitGluTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 708E05A22CF352A500489532 /* Build configuration list for PBXNativeTarget "FitGluTests" */;
+			buildPhases = (
+				708E055B2CF352A500489532 /* Sources */,
+				708E055C2CF352A500489532 /* Frameworks */,
+				708E055D2CF352A500489532 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				708E05612CF352A500489532 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				708E05622CF352A500489532 /* FitGluTests */,
+			);
+			name = FitGluTests;
+			packageProductDependencies = (
+			);
+			productName = FitGluTests;
+			productReference = 708E055F2CF352A500489532 /* FitGluTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		708E05682CF352A500489532 /* FitGluUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 708E05A52CF352A500489532 /* Build configuration list for PBXNativeTarget "FitGluUITests" */;
+			buildPhases = (
+				708E05652CF352A500489532 /* Sources */,
+				708E05662CF352A500489532 /* Frameworks */,
+				708E05672CF352A500489532 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				708E056B2CF352A500489532 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				708E056C2CF352A500489532 /* FitGluUITests */,
+			);
+			name = FitGluUITests;
+			packageProductDependencies = (
+			);
+			productName = FitGluUITests;
+			productReference = 708E05692CF352A500489532 /* FitGluUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		708E05742CF352A500489532 /* FitGlu Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 708E059B2CF352A500489532 /* Build configuration list for PBXNativeTarget "FitGlu Watch App" */;
+			buildPhases = (
+				708E05712CF352A500489532 /* Sources */,
+				708E05722CF352A500489532 /* Frameworks */,
+				708E05732CF352A500489532 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				708E05792CF352A500489532 /* FitGlu Watch App */,
+			);
+			name = "FitGlu Watch App";
+			packageProductDependencies = (
+			);
+			productName = "FitGlu Watch App";
+			productReference = 708E05752CF352A500489532 /* FitGlu Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		708E05862CF352A500489532 /* FitGlu Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 708E05A82CF352A500489532 /* Build configuration list for PBXNativeTarget "FitGlu Watch AppTests" */;
+			buildPhases = (
+				708E05832CF352A500489532 /* Sources */,
+				708E05842CF352A500489532 /* Frameworks */,
+				708E05852CF352A500489532 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				708E05892CF352A500489532 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				708E058A2CF352A500489532 /* FitGlu Watch AppTests */,
+			);
+			name = "FitGlu Watch AppTests";
+			packageProductDependencies = (
+			);
+			productName = "FitGlu Watch AppTests";
+			productReference = 708E05872CF352A500489532 /* FitGlu Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		708E05902CF352A500489532 /* FitGlu Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 708E05AB2CF352A500489532 /* Build configuration list for PBXNativeTarget "FitGlu Watch AppUITests" */;
+			buildPhases = (
+				708E058D2CF352A500489532 /* Sources */,
+				708E058E2CF352A500489532 /* Frameworks */,
+				708E058F2CF352A500489532 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				708E05932CF352A500489532 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				708E05942CF352A500489532 /* FitGlu Watch AppUITests */,
+			);
+			name = "FitGlu Watch AppUITests";
+			packageProductDependencies = (
+			);
+			productName = "FitGlu Watch AppUITests";
+			productReference = 708E05912CF352A500489532 /* FitGlu Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		708E05472CF352A400489532 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1610;
+				LastUpgradeCheck = 1610;
+				TargetAttributes = {
+					708E054E2CF352A400489532 = {
+						CreatedOnToolsVersion = 16.1;
+					};
+					708E055E2CF352A500489532 = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 708E054E2CF352A400489532;
+					};
+					708E05682CF352A500489532 = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 708E054E2CF352A400489532;
+					};
+					708E05742CF352A500489532 = {
+						CreatedOnToolsVersion = 16.1;
+					};
+					708E05862CF352A500489532 = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 708E05742CF352A500489532;
+					};
+					708E05902CF352A500489532 = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 708E05742CF352A500489532;
+					};
+				};
+			};
+			buildConfigurationList = 708E054A2CF352A400489532 /* Build configuration list for PBXProject "FitGlu" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 708E05462CF352A400489532;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 708E05502CF352A400489532 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				708E054E2CF352A400489532 /* FitGlu */,
+				708E055E2CF352A500489532 /* FitGluTests */,
+				708E05682CF352A500489532 /* FitGluUITests */,
+				708E05742CF352A500489532 /* FitGlu Watch App */,
+				708E05862CF352A500489532 /* FitGlu Watch AppTests */,
+				708E05902CF352A500489532 /* FitGlu Watch AppUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		708E054D2CF352A400489532 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E055D2CF352A500489532 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E05672CF352A500489532 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E05732CF352A500489532 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E05852CF352A500489532 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E058F2CF352A500489532 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		708E054B2CF352A400489532 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E055B2CF352A500489532 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E05652CF352A500489532 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E05712CF352A500489532 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E05832CF352A500489532 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		708E058D2CF352A500489532 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		708E05612CF352A500489532 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 708E054E2CF352A400489532 /* FitGlu */;
+			targetProxy = 708E05602CF352A500489532 /* PBXContainerItemProxy */;
+		};
+		708E056B2CF352A500489532 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 708E054E2CF352A400489532 /* FitGlu */;
+			targetProxy = 708E056A2CF352A500489532 /* PBXContainerItemProxy */;
+		};
+		708E05782CF352A500489532 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 708E05742CF352A500489532 /* FitGlu Watch App */;
+			targetProxy = 708E05772CF352A500489532 /* PBXContainerItemProxy */;
+		};
+		708E05892CF352A500489532 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 708E05742CF352A500489532 /* FitGlu Watch App */;
+			targetProxy = 708E05882CF352A500489532 /* PBXContainerItemProxy */;
+		};
+		708E05932CF352A500489532 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 708E05742CF352A500489532 /* FitGlu Watch App */;
+			targetProxy = 708E05922CF352A500489532 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		708E05992CF352A500489532 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		708E059A2CF352A500489532 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		708E059C2CF352A500489532 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"FitGlu Watch App/Preview Content\"";
+				DEVELOPMENT_TEAM = G63BL4UP5A;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = FitGlu;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.aliaksandrrusak.FitGlu;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aliaksandrrusak.FitGlu.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.1;
+			};
+			name = Debug;
+		};
+		708E059D2CF352A500489532 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"FitGlu Watch App/Preview Content\"";
+				DEVELOPMENT_TEAM = G63BL4UP5A;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = FitGlu;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.aliaksandrrusak.FitGlu;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aliaksandrrusak.FitGlu.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.1;
+			};
+			name = Release;
+		};
+		708E05A02CF352A500489532 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"FitGlu/Preview Content\"";
+				DEVELOPMENT_TEAM = G63BL4UP5A;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = FitGlu;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aliaksandrrusak.FitGlu;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		708E05A12CF352A500489532 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"FitGlu/Preview Content\"";
+				DEVELOPMENT_TEAM = G63BL4UP5A;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = FitGlu;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aliaksandrrusak.FitGlu;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		708E05A32CF352A500489532 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G63BL4UP5A;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aliaksandrrusak.FitGluTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FitGlu.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FitGlu";
+			};
+			name = Debug;
+		};
+		708E05A42CF352A500489532 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G63BL4UP5A;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aliaksandrrusak.FitGluTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FitGlu.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FitGlu";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		708E05A62CF352A500489532 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G63BL4UP5A;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aliaksandrrusak.FitGluUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = FitGlu;
+			};
+			name = Debug;
+		};
+		708E05A72CF352A500489532 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G63BL4UP5A;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aliaksandrrusak.FitGluUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = FitGlu;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		708E05A92CF352A500489532 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G63BL4UP5A;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.aliaksandrrusak.FitGlu-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FitGlu Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FitGlu Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.1;
+			};
+			name = Debug;
+		};
+		708E05AA2CF352A500489532 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G63BL4UP5A;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.aliaksandrrusak.FitGlu-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FitGlu Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FitGlu Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.1;
+			};
+			name = Release;
+		};
+		708E05AC2CF352A500489532 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G63BL4UP5A;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.aliaksandrrusak.FitGlu-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "FitGlu Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.1;
+			};
+			name = Debug;
+		};
+		708E05AD2CF352A500489532 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = G63BL4UP5A;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.aliaksandrrusak.FitGlu-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "FitGlu Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		708E054A2CF352A400489532 /* Build configuration list for PBXProject "FitGlu" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				708E05992CF352A500489532 /* Debug */,
+				708E059A2CF352A500489532 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		708E059B2CF352A500489532 /* Build configuration list for PBXNativeTarget "FitGlu Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				708E059C2CF352A500489532 /* Debug */,
+				708E059D2CF352A500489532 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		708E059F2CF352A500489532 /* Build configuration list for PBXNativeTarget "FitGlu" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				708E05A02CF352A500489532 /* Debug */,
+				708E05A12CF352A500489532 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		708E05A22CF352A500489532 /* Build configuration list for PBXNativeTarget "FitGluTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				708E05A32CF352A500489532 /* Debug */,
+				708E05A42CF352A500489532 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		708E05A52CF352A500489532 /* Build configuration list for PBXNativeTarget "FitGluUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				708E05A62CF352A500489532 /* Debug */,
+				708E05A72CF352A500489532 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		708E05A82CF352A500489532 /* Build configuration list for PBXNativeTarget "FitGlu Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				708E05A92CF352A500489532 /* Debug */,
+				708E05AA2CF352A500489532 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		708E05AB2CF352A500489532 /* Build configuration list for PBXNativeTarget "FitGlu Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				708E05AC2CF352A500489532 /* Debug */,
+				708E05AD2CF352A500489532 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 708E05472CF352A400489532 /* Project object */;
+}

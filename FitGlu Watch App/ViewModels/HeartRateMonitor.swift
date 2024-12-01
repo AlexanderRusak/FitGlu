@@ -1,37 +1,18 @@
 import Foundation
 import HealthKit
 import WatchKit
-import WatchConnectivity
 
 class HeartRateMonitor: NSObject, ObservableObject {
     private let healthStore = HKHealthStore()
     private var session: HKWorkoutSession?
     private var builder: HKLiveWorkoutBuilder?
+    private var heartRateQuery: HKObserverQuery? // Ссылка на текущий запрос
     private(set) var cachedAge: Int?
     @Published var heartRate: Double = 0.0
-    
+    private var isWorkoutActive = false // Флаг активности тренировки
+
     override init() {
         super.init()
-        if WCSession.isSupported() {
-            WCSession.default.delegate = self
-            WCSession.default.activate()
-        }
-    }
-    
-    func sendHeartRateToPhone(_ heartRate: Double, trainingType: String) {
-        guard WCSession.default.isReachable else {
-            print("Телефон недоступен для связи")
-            return
-        }
-
-        let message: [String: Any] = [
-            "heartRate": heartRate,
-            "trainingType": trainingType
-        ]
-
-        WCSession.default.sendMessage(message, replyHandler: nil) { error in
-            print("Ошибка отправки сообщения: \(error.localizedDescription)")
-        }
     }
 
     func requestAuthorization() {
@@ -53,7 +34,7 @@ class HeartRateMonitor: NSObject, ObservableObject {
         }
     }
 
-    func startWorkoutSession(trainingType: String) {
+    func startWorkoutSession() {
         guard HKHealthStore.isHealthDataAvailable() else {
             return
         }
@@ -80,8 +61,11 @@ class HeartRateMonitor: NSObject, ObservableObject {
                     print("Error starting data collection: \(error.localizedDescription)")
                 }
             }
-            
-            sendHeartRateToPhone(heartRate, trainingType: trainingType)
+
+            // Установить флаг активности и начать мониторинг пульса
+            isWorkoutActive = true
+            startHeartRateMonitoring()
+
             WKInterfaceDevice.current().play(.start)
         } catch {
             print("Error starting workout session: \(error.localizedDescription)")
@@ -96,30 +80,34 @@ class HeartRateMonitor: NSObject, ObservableObject {
             }
         }
 
+        // Убрать флаг активности и завершить мониторинг пульса
+        isWorkoutActive = false
+        stopHeartRateMonitoring()
+
         WKInterfaceDevice.current().play(.stop)
     }
-    
-    func fetchAge() {
-         do {
-             let birthDate = try healthStore.dateOfBirthComponents().date
-             let ageComponents = Calendar.current.dateComponents([.year], from: birthDate ?? Date(), to: Date())
-             cachedAge = ageComponents.year
-             print("User's age fetched and cached: \(cachedAge ?? 0)")
-         } catch {
-             print("Ошибка получения возраста: \(error.localizedDescription)")
-         }
-     }
 
-     func getAge() -> Int? {
-         return cachedAge
-     }
-    
-    private func fetchHeartRate() {
+    func fetchAge() {
+        do {
+            let birthDate = try healthStore.dateOfBirthComponents().date
+            let ageComponents = Calendar.current.dateComponents([.year], from: birthDate ?? Date(), to: Date())
+            cachedAge = ageComponents.year
+            print("User's age fetched and cached: \(cachedAge ?? 0)")
+        } catch {
+            print("Ошибка получения возраста: \(error.localizedDescription)")
+        }
+    }
+
+    func getAge() -> Int? {
+        return cachedAge
+    }
+
+    private func startHeartRateMonitoring() {
         guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
             return
         }
 
-        let query = HKObserverQuery(sampleType: heartRateType, predicate: nil) { [weak self] _, _, error in
+        heartRateQuery = HKObserverQuery(sampleType: heartRateType, predicate: nil) { [weak self] _, _, error in
             if let error = error {
                 print("Ошибка ObserverQuery: \(error.localizedDescription)")
                 return
@@ -127,10 +115,19 @@ class HeartRateMonitor: NSObject, ObservableObject {
             self?.fetchLatestHeartRate()
         }
         
-        healthStore.execute(query)
+        healthStore.execute(heartRateQuery!)
+    }
+
+    private func stopHeartRateMonitoring() {
+        if let query = heartRateQuery {
+            healthStore.stop(query)
+            heartRateQuery = nil
+            print("Heart rate monitoring stopped.")
+        }
     }
 
     private func fetchLatestHeartRate() {
+        guard isWorkoutActive else { return } // Проверяем, активна ли тренировка
         guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
             return
         }
@@ -191,13 +188,8 @@ extension HeartRateMonitor: HKLiveWorkoutBuilderDelegate {
 
                 DispatchQueue.main.async {
                     self.heartRate = value ?? 0.0
-                    self.sendHeartRateToPhone(self.heartRate, trainingType: "Your Training Type") // Example
                 }
             }
         }
     }
-}
-
-extension HeartRateMonitor: WCSessionDelegate {
-    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
 }

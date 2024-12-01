@@ -22,6 +22,7 @@ struct WorkoutMonitorView: View {
                 .cornerRadius(10)
             } else {
                 Button("Start Workout") {
+                    monitor.startWorkoutSession()
                     isWorkoutActive = true
                 }
                 .padding()

@@ -33,7 +33,6 @@ struct WorkoutMonitorView: View {
         }
         .onChange(of: monitor.heartRate) { newHeartRate in
             if let age = monitor.getAge() {
-                print("Heart rate changed to: \(newHeartRate), age: \(age), training type: \(trainingType)")
                 zoneManager.updateZone(for: newHeartRate, age: age, trainingType: trainingType)
             }
         }

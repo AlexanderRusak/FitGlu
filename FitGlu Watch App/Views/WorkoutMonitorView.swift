@@ -3,6 +3,7 @@ import SwiftUI
 struct WorkoutMonitorView: View {
     let trainingType: TrainingType
     @StateObject private var monitor = HeartRateMonitor()
+    @StateObject private var authorizationManager = HealthKitAuthorizationManager()
     @State private var zoneManager = HeartRateZoneManager()
     @State private var isWorkoutActive = false
 
@@ -32,13 +33,15 @@ struct WorkoutMonitorView: View {
             }
         }
         .onChange(of: monitor.heartRate) { newHeartRate in
-            if let age = monitor.getAge() {
+            if let age = monitor.age { // Используем свойство age напрямую
                 zoneManager.updateZone(for: newHeartRate, age: age, trainingType: trainingType)
             }
-        }
-        .onAppear {
-            monitor.requestAuthorization()
-            monitor.fetchAge()
+        }.onAppear {
+            authorizationManager.requestAuthorization { success, _ in
+                if success {
+                    monitor.fetchAge(using: authorizationManager)
+                }
+            }
         }
     }
 }

@@ -4,14 +4,14 @@ struct WorkoutSelectionView: View {
     var body: some View {
         NavigationView {
             List {
-                NavigationLink(destination: WorkoutMonitorView(trainingType: .fatBurning)) {
-                    Text("Fat Burning")
+                NavigationLink(destination: FatBurningView()) {
+                    Text(TrainingType.fatBurning.rawValue)
                 }
-                NavigationLink(destination: WorkoutMonitorView(trainingType: .cardio)) {
-                    Text("Cardio")
+                NavigationLink(destination: CardioView()) {
+                    Text(TrainingType.cardio.rawValue)
                 }
-                NavigationLink(destination: WorkoutMonitorView(trainingType: .highIntensity)) {
-                    Text("High Intensity")
+                NavigationLink(destination: HighIntensityView()) {
+                    Text(TrainingType.highIntensity.rawValue)
                 }
             }
             .navigationTitle("Select Workout")

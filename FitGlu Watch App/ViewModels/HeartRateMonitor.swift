@@ -6,20 +6,11 @@ class HeartRateMonitor: ObservableObject {
     private let workoutManager = WorkoutManager()
 
     @Published var heartRate: Double = 0.0
-    @Published var age: Int? // Используется напрямую в SwiftUI
 
     init() {
         heartRateManager.onHeartRateUpdate = { [weak self] newHeartRate in
             DispatchQueue.main.async {
                 self?.heartRate = newHeartRate
-            }
-        }
-    }
-
-    func fetchAge(using authorizationManager: HealthKitAuthorizationManager) {
-        authorizationManager.fetchAge { [weak self] fetchedAge in
-            DispatchQueue.main.async {
-                self?.age = fetchedAge
             }
         }
     }

@@ -11,21 +11,14 @@ class HealthKitAuthorizationManager: ObservableObject {
         }
 
         let readTypes: Set<HKObjectType> = [
-            HKObjectType.quantityType(forIdentifier: .heartRate)!, // Частота сердечных сокращений
-            HKObjectType.characteristicType(forIdentifier: .biologicalSex)!, // Биологический пол
-            HKObjectType.characteristicType(forIdentifier: .dateOfBirth)! // Дата рождения
+            HKObjectType.quantityType(forIdentifier: .heartRate)!,
+            HKObjectType.characteristicType(forIdentifier: .biologicalSex)!,
+            HKObjectType.characteristicType(forIdentifier: .dateOfBirth)!
         ]
 
         healthStore.requestAuthorization(toShare: [], read: readTypes) { success, error in
-            if success {
-                print("Авторизация HealthKit успешна.")
-            } else if let error = error {
-                print("Ошибка авторизации HealthKit: \(error.localizedDescription)")
-            } else {
-                print("Авторизация отклонена пользователем.")
-            }
+            completion(success, error)
         }
-
     }
 
     func fetchAge(completion: @escaping (Int?) -> Void) {
@@ -44,7 +37,7 @@ class HealthKitAuthorizationManager: ObservableObject {
             completion(nil)
         }
     }
-    
+
     func fetchBiologicalSex(completion: @escaping (HKBiologicalSex?) -> Void) {
         do {
             let biologicalSex = try healthStore.biologicalSex().biologicalSex

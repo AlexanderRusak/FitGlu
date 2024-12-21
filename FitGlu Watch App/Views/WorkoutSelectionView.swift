@@ -4,15 +4,23 @@ struct WorkoutSelectionView: View {
     var body: some View {
         NavigationView {
             List {
-                NavigationLink(destination: WorkoutMonitorView(trainingType: .fatBurning)) {
-                    Text("Fat Burning")
+                NavigationLink(destination: FatBurningView()) {
+                    Text(TrainingType.fatBurning.rawValue)
                 }
-                NavigationLink(destination: WorkoutMonitorView(trainingType: .cardio)) {
-                    Text("Cardio")
+                
+                // Закомментировано временно, пока Cardio Training не реализована
+                // NavigationLink(destination: CardioView()) {
+                //     Text(TrainingType.cardio.rawValue)
+                // }
+                
+                NavigationLink(destination: StrengthTrainingView()) {
+                    Text("Strength Training")
                 }
-                NavigationLink(destination: WorkoutMonitorView(trainingType: .highIntensity)) {
-                    Text("High Intensity")
-                }
+                
+                // Закомментировано временно, пока High Intensity Training не реализована
+                // NavigationLink(destination: HighIntensityView()) {
+                //     Text(TrainingType.highIntensity.rawValue)
+                // }
             }
             .navigationTitle("Select Workout")
         }

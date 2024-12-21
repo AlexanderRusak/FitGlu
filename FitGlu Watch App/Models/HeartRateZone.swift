@@ -7,8 +7,8 @@
 
 import Foundation
 
-enum HeartRateZone: Equatable {
-    case belowTarget
-    case withinTarget
-    case aboveTarget
+enum HeartRateZone: String {
+    case belowTarget = "Below Target"
+    case withinTarget = "Within Target"
+    case aboveTarget = "Above Target"
 }

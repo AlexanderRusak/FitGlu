@@ -13,7 +13,8 @@ class HealthKitAuthorizationManager: ObservableObject {
         let readTypes: Set<HKObjectType> = [
             HKObjectType.quantityType(forIdentifier: .heartRate)!,
             HKObjectType.characteristicType(forIdentifier: .biologicalSex)!,
-            HKObjectType.characteristicType(forIdentifier: .dateOfBirth)!
+            HKObjectType.characteristicType(forIdentifier: .dateOfBirth)!,
+            HKObjectType.quantityType(forIdentifier: .bloodGlucose)!
         ]
 
         healthStore.requestAuthorization(toShare: [], read: readTypes) { success, error in

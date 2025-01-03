@@ -4,44 +4,84 @@ struct FatBurningView: View {
     @StateObject private var manager = FatBurningManager()
 
     var body: some View {
-        VStack {
+        VStack(spacing: 5) {
+            // Заголовок
             Text("Fat Burning Workout")
                 .font(.headline)
+                .padding(.top, 0)
 
-            // Центральное отображение пульса
-            Text("\(String(format: "%.0f", manager.currentHeartRate)) bpm")
-                .font(.system(size: 30, weight: .bold, design: .default))
-                .foregroundColor(.green)
+            // Блок пульса и глюкозы
+            HStack(spacing: 15) {
+                // Пульс
+                VStack(spacing: 0) {
+                    Text("\(String(format: "%.0f", manager.currentHeartRate))")
+                        .font(.system(size: 40, weight: .heavy, design: .default))
+                        .foregroundColor(.green)
+
+                    Text("bpm")
+                        .font(.footnote)
+                        .foregroundColor(.gray)
+                }
+
+                // Вертикальный разделитель (опционально)
+                Divider()
+                    .frame(height: 40)
+                    .background(Color.gray.opacity(0.5))
+
+                // Глюкоза
+                VStack(spacing: 4) {
+                    // Само значение глюкозы
+                    Text("\(String(format: "%.1f", manager.currentGlucose))") // "%.0f" если хотите без десятичных
+                        .font(.system(size: 30, weight: .bold, design: .default))
+                        .foregroundColor(.pink)
+
+                    // Подпись с единицей измерения
+                    Text("mg/dL")
+                        .font(.footnote)
+                        .foregroundColor(.gray)
+                }
+            }
+            .padding(.top, 0)
+
+            // Зона
+            Text("Zone: \(manager.currentZone)")
+                .font(.headline)
+                .foregroundColor(colorForZone(manager.currentZone))
                 .padding(.vertical, 0)
 
-            // Текущая зона тренировки
-            Text("Zone: \(manager.currentZone)")
-                .foregroundColor(colorForZone(manager.currentZone))
-                .font(.title3)
-                .padding()
-
-            Spacer()
 
             // Кнопка управления тренировкой
             if manager.isWorkoutActive {
-                Button("Finish Workout") {
+                Button {
                     manager.stopWorkout()
+                } label: {
+                    Text("Finish Workout")
+                        .font(.headline)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.red)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                 }
-                .padding()
-                .background(Color.red)
-                .foregroundColor(.white)
-                .cornerRadius(10)
+                .padding(.horizontal)
             } else {
-                Button("Start Workout") {
+                Button {
                     manager.startWorkout()
+                } label: {
+                    Text("Start Workout")
+                        .font(.headline)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.green)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                 }
-                .padding()
-                .background(Color.green)
-                .foregroundColor(.white)
-                .cornerRadius(10)
+                .padding(.horizontal)
             }
         }
         .padding()
+        .navigationTitle("Fat Burning")
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func colorForZone(_ zone: String) -> Color {
@@ -53,7 +93,6 @@ struct FatBurningView: View {
         }
     }
 }
-
 
 #Preview {
     FatBurningView()

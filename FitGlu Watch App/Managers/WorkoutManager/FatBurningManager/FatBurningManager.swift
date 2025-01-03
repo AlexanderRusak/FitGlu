@@ -9,7 +9,10 @@ class FatBurningManager: ObservableObject {
     @Published var age: Int?
     @Published var isWorkoutActive: Bool = false
     @Published var currentZone: String = "Below Target"
-        
+
+    // NEW: Глюкоза — текущее значение (для отображения в UI, если нужно)
+    @Published var currentGlucose: Double = 0.0
+
     init() {
         print("FatBurningManager initialized.")
         healthDataManager.requestAuthorization { [weak self] success, error in
@@ -26,8 +29,10 @@ class FatBurningManager: ObservableObject {
             }
         }
         configureHeartRateMonitoring()
+        configureBloodGlucoseMonitoring() // NEW: Настраиваем подписку на глюкозу
     }
 
+    // MARK: - Настройка мониторинга пульса
     private func configureHeartRateMonitoring() {
         print("Configuring heart rate monitoring...")
         healthDataManager.onHeartRateUpdate = { [weak self] heartRate in
@@ -36,6 +41,19 @@ class FatBurningManager: ObservableObject {
                 self?.currentHeartRate = heartRate
                 self?.logCurrentStatus()
                 self?.updateZone(for: heartRate)
+            }
+        }
+    }
+
+    // MARK: - Настройка мониторинга глюкозы (NEW)
+    private func configureBloodGlucoseMonitoring() {
+        print("Configuring blood glucose monitoring...")
+        healthDataManager.onBloodGlucoseUpdate = { [weak self] glucoseValue in
+            print("Blood glucose received: \(glucoseValue)")
+            DispatchQueue.main.async {
+                self?.currentGlucose = glucoseValue
+                self?.logCurrentStatusGlucose()
+                // Здесь можно добавить дополнительную аналитику, логику и т.д.
             }
         }
     }
@@ -56,29 +74,40 @@ class FatBurningManager: ObservableObject {
         }
     }
 
+    // MARK: - Управление «Жиросжигающей тренировки»
+    
     func startWorkout() {
         print("Starting workout...")
         isWorkoutActive = true
+        
+        // 1. Устанавливаем сэмпл для пульса (в режиме симулятора)
         healthDataManager.setSample(fatBurningSample)
         
-        // Принудительно снова вызываем fetchUserDetails, чтобы загрузить возраст и пол из сэмпла
+        // 2. Устанавливаем сэмпл для глюкозы (в режиме симулятора) (NEW)
+        healthDataManager.setGlucoseSample(glucoseSample)
+
+        // 3. Принудительно обновляем возраст/пол
         healthDataManager.fetchUserDetails()
-        
         DispatchQueue.main.async {
             self.age = self.healthDataManager.age
             let genderString = self.genderString(from: self.healthDataManager.gender ?? .notSet)
             let ageString = self.age != nil ? String(self.age!) : "Unknown"
-            print("Сэмпл установлен. Пол = \(genderString), Возраст = \(ageString)")
+            print("Сэмплы установлены. Пол = \(genderString), Возраст = \(ageString)")
         }
 
+        // 4. Старт мониторинга (реальные данные или симуляция)
         healthDataManager.startMonitoringHeartRate()
+        healthDataManager.startMonitoringBloodGlucose() // NEW
     }
 
     func stopWorkout() {
         print("Stopping workout...")
         isWorkoutActive = false
         healthDataManager.stopMonitoringHeartRate()
+        healthDataManager.stopMonitoringBloodGlucose() // NEW
     }
+    
+    // MARK: - Вспомогательные методы
     
     private func genderString(from gender: HKBiologicalSex) -> String {
         switch gender {
@@ -89,10 +118,17 @@ class FatBurningManager: ObservableObject {
         }
     }
     
-    /// Дополнительный метод для логирования текущего статуса (возраст, пол, пульс, зона)
+    /// Лог текущего статуса (пульс)
     private func logCurrentStatus() {
         let genderString = genderString(from: healthDataManager.gender ?? .notSet)
         let ageString = age != nil ? String(age!) : "Unknown"
-        print("Текущий статус: Пол = \(genderString), Возраст = \(ageString), Пульс = \(currentHeartRate), Зона = \(currentZone)")
+        print("Текущий статус (пульс): Пол = \(genderString), Возраст = \(ageString), Пульс = \(currentHeartRate), Зона = \(currentZone)")
+    }
+
+    /// Лог текущего статуса (глюкоза)
+    private func logCurrentStatusGlucose() {
+        let genderString = genderString(from: healthDataManager.gender ?? .notSet)
+        let ageString = age != nil ? String(age!) : "Unknown"
+        print("Текущий статус (глюкоза): Пол = \(genderString), Возраст = \(ageString), Глюкоза = \(currentGlucose)")
     }
 }

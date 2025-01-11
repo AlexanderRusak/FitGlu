@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		706269802D29E40700C0D4EF /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 7062697F2D29E40700C0D4EF /* SQLite */; };
 		708E05762CF352A500489532 /* FitGlu Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 708E05752CF352A500489532 /* FitGlu Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		7093BB382D29E58B00E6C3F0 /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 7093BB372D29E58B00E6C3F0 /* SQLite */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -101,6 +103,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				706269802D29E40700C0D4EF /* SQLite in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -122,6 +125,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7093BB382D29E58B00E6C3F0 /* SQLite in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -182,6 +186,7 @@
 			);
 			name = FitGlu;
 			packageProductDependencies = (
+				7062697F2D29E40700C0D4EF /* SQLite */,
 			);
 			productName = FitGlu;
 			productReference = 708E054F2CF352A400489532 /* FitGlu.app */;
@@ -250,6 +255,7 @@
 			);
 			name = "FitGlu Watch App";
 			packageProductDependencies = (
+				7093BB372D29E58B00E6C3F0 /* SQLite */,
 			);
 			productName = "FitGlu Watch App";
 			productReference = 708E05752CF352A500489532 /* FitGlu Watch App.app */;
@@ -286,7 +292,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1610;
-				LastUpgradeCheck = 1610;
+				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					708E054E2CF352A400489532 = {
 						CreatedOnToolsVersion = 16.1;
@@ -317,6 +323,9 @@
 			);
 			mainGroup = 708E05462CF352A400489532;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7062697E2D29E40700C0D4EF /* XCRemoteSwiftPackageReference "SQLite" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 708E05502CF352A400489532 /* Products */;
 			projectDirPath = "";
@@ -465,6 +474,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -526,6 +536,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -631,6 +642,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = FitGlu;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -663,6 +675,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = FitGlu;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -863,6 +876,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		7062697E2D29E40700C0D4EF /* XCRemoteSwiftPackageReference "SQLite" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stephencelis/SQLite.swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.15.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7062697F2D29E40700C0D4EF /* SQLite */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7062697E2D29E40700C0D4EF /* XCRemoteSwiftPackageReference "SQLite" */;
+			productName = SQLite;
+		};
+		7093BB372D29E58B00E6C3F0 /* SQLite */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7062697E2D29E40700C0D4EF /* XCRemoteSwiftPackageReference "SQLite" */;
+			productName = SQLite;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 708E05472CF352A400489532 /* Project object */;
 }

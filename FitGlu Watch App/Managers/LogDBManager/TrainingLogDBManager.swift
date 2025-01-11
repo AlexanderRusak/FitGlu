@@ -1,13 +1,15 @@
 import Foundation
 import SQLite
 
+/// Менеджер для работы с таблицей `training_log`, хранящей основные сведения о тренировке.
 class TrainingLogDBManager {
+    // Используем одно и то же соединение к БД из DatabaseService
+    private let db = DatabaseService.shared.db
     
-    // Свойство для «базы» SQLite.swift
-    private var db: Connection?
+    // Определим нашу таблицу:
+    private let tableTrainingLog = Table("training_log")
     
-    // Названия таблицы и столбцов
-    private let tableTrainingLog = SQLite.Table("training_log")
+    // Колонки
     private let colID = SQLite.Expression<Int64>("id")
     private let colType = SQLite.Expression<String>("training_type")
     private let colStartDate = SQLite.Expression<Double>("start_date")
@@ -15,26 +17,15 @@ class TrainingLogDBManager {
     
     init() {
         do {
-            let documentsUrl = try FileManager.default.url(
-                for: .documentDirectory,
-                in: .userDomainMask,
-                appropriateFor: nil,
-                create: true
-            )
-            let fileUrl = documentsUrl.appendingPathComponent("training.db")
-            
-            db = try Connection(fileUrl.path)
             try createTable()
-            
-            print("TrainingLogDBManager init: DB created/opened at \(fileUrl.path)")
+            print("TrainingLogDBManager: ensure `training_log` table created.")
         } catch {
-            print("Ошибка инициализации базы: \(error)")
+            print("Ошибка при создании таблицы `training_log`: \(error)")
         }
     }
     
+    /// Создаём (если нет) таблицу training_log
     private func createTable() throws {
-        guard let db = db else { return }
-        
         try db.run(tableTrainingLog.create(ifNotExists: true) { table in
             table.column(colID, primaryKey: true)
             table.column(colType)
@@ -43,12 +34,11 @@ class TrainingLogDBManager {
         })
     }
     
-    /// Начинаем новую тренировку
+    /// Начинаем новую тренировку, возвращаем ID записи
     @discardableResult
     func startTraining(type: TrainingType) -> Int64? {
-        guard let db = db else { return nil }
-        
         let now = Date().timeIntervalSince1970
+        
         let insert = tableTrainingLog.insert(
             colType <- type.rawValue,
             colStartDate <- now,
@@ -57,35 +47,30 @@ class TrainingLogDBManager {
         
         do {
             let rowId = try db.run(insert)
-            print("Inserted training log rowId = \(rowId)")
+            print("Inserted training_log rowId = \(rowId), type = \(type.rawValue)")
             return rowId
         } catch {
-            print("Ошибка вставки записи: \(error)")
+            print("Ошибка вставки записи в training_log: \(error)")
             return nil
         }
     }
     
-    /// Завершаем тренировку по ID
+    /// Завершаем тренировку (записываем endDate)
     func finishTraining(id: Int64) {
-        guard let db = db else { return }
-        
         let now = Date().timeIntervalSince1970
-        let row = tableTrainingLog.filter(colID == id)
         
+        let row = tableTrainingLog.filter(colID == id)
         do {
             try db.run(row.update(colEndDate <- now))
-            print("Updated training log, id = \(id), endDate = \(now)")
+            print("Updated training_log id=\(id), endDate=\(now)")
         } catch {
             print("Ошибка обновления записи: \(error)")
         }
     }
     
-    /// NEW: Печатаем все записи в консоль
+    /// Печатаем все записи (для отладки)
     func printAllTrainings() {
-        guard let db = db else { return }
-        
         do {
-            // Перебираем все строки из таблицы
             for row in try db.prepare(tableTrainingLog) {
                 let idValue     = try row.get(colID)
                 let typeValue   = try row.get(colType)
@@ -101,10 +86,30 @@ class TrainingLogDBManager {
                     endDateString = "Not finished"
                 }
                 
-                print("ID: \(idValue), Type: \(typeValue), Start: \(startDate), End: \(endDateString)")
+                print("TRAINING -> ID: \(idValue), type: \(typeValue), start: \(startDate), end: \(endDateString)")
             }
         } catch {
-            print("Ошибка чтения записей: \(error)")
+            print("Ошибка чтения training_log: \(error)")
+        }
+    }
+    
+    /// (Опционально) Метод для печати конкретной тренировки
+    func printTraining(by trainingID: Int64) {
+        let row = tableTrainingLog.filter(colID == trainingID)
+        do {
+            for r in try db.prepare(row) {
+                let idValue = try r.get(colID)
+                let typeValue = try r.get(colType)
+                let startValue = try r.get(colStartDate)
+                let endValue = try r.get(colEndDate)
+                
+                let startDate = Date(timeIntervalSince1970: startValue)
+                let endDateStr = endValue != nil ? "\(Date(timeIntervalSince1970: endValue!))" : "Not finished"
+                
+                print("TRAINING -> ID: \(idValue), type: \(typeValue), start: \(startDate), end: \(endDateStr)")
+            }
+        } catch {
+            print("Ошибка при чтении тренировки \(trainingID): \(error)")
         }
     }
 }

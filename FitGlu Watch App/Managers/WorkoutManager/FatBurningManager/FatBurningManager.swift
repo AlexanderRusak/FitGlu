@@ -4,16 +4,20 @@ import HealthKit
 class FatBurningManager: ObservableObject {
     private let zoneManager = HeartRateZoneManager()
     private let healthDataManager = HealthDataManager()
-
+    
+    // Параметры UI / состояния
     @Published var currentHeartRate: Double = 0.0
     @Published var age: Int?
     @Published var isWorkoutActive: Bool = false
     @Published var currentZone: String = "Below Target"
     @Published var currentGlucose: Double = 0.0
     
-    // MARK: - Добавляем лог-менеджер
-    private let logManager = TrainingLogDBManager()
-    private var currentLogID: Int64?   // ID записи в БД для текущей тренировки
+    // Вместо хранения двух менеджеров —
+    // используем единый сервис (фасад).
+    private let workoutLogService = WorkoutLogService()
+    
+    // Текущее trainingID (из таблицы training_log)
+    private var currentLogID: Int64?
 
     init() {
         print("FatBurningManager initialized.")
@@ -43,6 +47,12 @@ class FatBurningManager: ObservableObject {
                 self?.currentHeartRate = heartRate
                 self?.logCurrentStatus()
                 self?.updateZone(for: heartRate)
+                
+                // NEW: Если тренировка активна, записываем пульс в БД через WorkoutLogService
+                if let logID = self?.currentLogID, self?.isWorkoutActive == true {
+                    self?.workoutLogService.recordHeartRate(trainingID: logID,
+                                                            hrValue: Int(heartRate))
+                }
             }
         }
     }
@@ -58,24 +68,21 @@ class FatBurningManager: ObservableObject {
             }
         }
     }
-
-    // MARK: - Управление тренировкой «Fat Burning»
     
+    // MARK: - Управление тренировкой Fat Burning
     func startWorkout() {
-        print("Starting workout...")
+        print("Starting Fat Burning workout...")
         isWorkoutActive = true
         
-        // 1. Логируем старт в DB
-        let newID = logManager.startTraining(type: .fatBurning) // <-- Вызываем
+        // 1. Вызываем сервис (startWorkout), получаем trainingID
+        let newID = workoutLogService.startWorkout(type: .fatBurning)
         currentLogID = newID
         
-        // 2. Устанавливаем сэмпл для пульса
+        // 2. Настройка HealthDataManager (симуляции или реальных данных)
         healthDataManager.setSample(fatBurningSample)
-        
-        // 3. Устанавливаем сэмпл для глюкозы
         healthDataManager.setGlucoseSample(glucoseSample)
-
-        // 4. Принудительно обновляем возраст/пол
+        
+        // 3. Обновляем возраст/пол
         healthDataManager.fetchUserDetails()
         DispatchQueue.main.async {
             self.age = self.healthDataManager.age
@@ -84,38 +91,38 @@ class FatBurningManager: ObservableObject {
             print("Сэмплы установлены. Пол = \(genderString), Возраст = \(ageString)")
         }
 
-        // 5. Старт мониторинга
+        // 4. Запуск мониторинга
         healthDataManager.startMonitoringHeartRate()
         healthDataManager.startMonitoringBloodGlucose()
     }
 
     func stopWorkout() {
-        print("Stopping workout...")
+        print("Stopping Fat Burning workout...")
         isWorkoutActive = false
         
+        // 1. Завершаем запись в БД, если есть
         if let logID = currentLogID {
-            logManager.finishTraining(id: logID)
-            currentLogID = nil
+            workoutLogService.stopWorkout(trainingID: logID)
             
-            // Сразу после завершения посмотрим список
-            logManager.printAllTrainings() // <-- вызов
+            // Для отладки: посмотрим, что у нас в БД по этой тренировке
+            workoutLogService.debugPrintAll(for: logID)
+            
+            // Сбрасываем
+            currentLogID = nil
         }
         
+        // 2. Остановка HealthKit мониторинга
         healthDataManager.stopMonitoringHeartRate()
         healthDataManager.stopMonitoringBloodGlucose()
     }
 
-    
-    // MARK: - Доп. логика зоны
+    // MARK: - Логика зон
     private func updateZone(for heartRate: Double) {
-        print("Updating zone for heart rate: \(heartRate)")
         guard let age = age else {
             print("Age is not available yet.")
             return
         }
-        
         zoneManager.updateZone(for: heartRate, age: age, trainingType: .fatBurning) { [weak self] (newZone: HeartRateZone) in
-            print("New zone received: \(newZone)")
             DispatchQueue.main.async {
                 self?.currentZone = "\(newZone)"
                 print("Zone updated to: \(self?.currentZone ?? "Unknown")")
@@ -123,8 +130,7 @@ class FatBurningManager: ObservableObject {
         }
     }
 
-    // MARK: - Вспомогательные методы
-    
+    // MARK: - Логирование статуса (пульс, глюкоза)
     private func genderString(from gender: HKBiologicalSex) -> String {
         switch gender {
         case .female: return "Female"

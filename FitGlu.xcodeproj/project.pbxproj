@@ -66,6 +66,11 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		70611A572D443625006E4B37 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		708E05512CF352A400489532 /* FitGlu */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = FitGlu;
@@ -142,6 +147,7 @@
 		708E05462CF352A400489532 = {
 			isa = PBXGroup;
 			children = (
+				70611A572D443625006E4B37 /* Shared */,
 				708E05512CF352A400489532 /* FitGlu */,
 				708E05622CF352A500489532 /* FitGluTests */,
 				708E056C2CF352A500489532 /* FitGluUITests */,
@@ -182,6 +188,7 @@
 				708E05782CF352A500489532 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				70611A572D443625006E4B37 /* Shared */,
 				708E05512CF352A400489532 /* FitGlu */,
 			);
 			name = FitGlu;
@@ -251,6 +258,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				70611A572D443625006E4B37 /* Shared */,
 				708E05792CF352A500489532 /* FitGlu Watch App */,
 			);
 			name = "FitGlu Watch App";

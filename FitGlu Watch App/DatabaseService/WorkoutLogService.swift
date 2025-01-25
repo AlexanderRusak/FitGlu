@@ -8,7 +8,7 @@
 import Foundation
 
 class WorkoutLogService {
-    private let trainingManager = TrainingLogDBManager()
+    private let trainingManager = TrainingLogDBManager.shared
     private let heartRateManager = HeartRateLogDBManager()
     
     /// Начать тренировку
@@ -38,10 +38,6 @@ class WorkoutLogService {
     /// Вывести в консоль данные об одной тренировке и её пульсовых записях
     func debugPrintAll(for trainingID: Int64) {
         print("=== WorkoutLogService: debugPrintAll(for: \(trainingID)) ===")
-        
-        // 1. Печатаем саму тренировку
-        trainingManager.printTraining(by: trainingID)
-        
         // 2. Печатаем все heart rate записи, связанные с этой тренировкой
         heartRateManager.printHeartRates(for: trainingID)
     }

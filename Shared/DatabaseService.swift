@@ -1,11 +1,10 @@
-// DatabaseService.swift
 import Foundation
 import SQLite
 
-class DatabaseService {
-    static let shared = DatabaseService()
+public class DatabaseService {
+    public static let shared = DatabaseService()
     
-    let db: Connection
+    public let db: Connection
     
     private init() {
         do {
@@ -18,10 +17,9 @@ class DatabaseService {
             let fileUrl = documentsUrl.appendingPathComponent("training.db")
             
             db = try Connection(fileUrl.path)
-            print("DatabaseService: DB created/opened at \(fileUrl.path)")
-            
+            print("Shared DatabaseService: DB opened at \(fileUrl.path)")
         } catch {
-            fatalError("Ошибка инициализации базы: \(error)")
+            fatalError("Shared DatabaseService error: \(error)")
         }
     }
 }

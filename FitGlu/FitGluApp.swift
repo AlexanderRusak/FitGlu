@@ -1,14 +1,15 @@
-//
-//  FitGluApp.swift
-//  FitGlu
-//
-//  Created by Александр Русак on 24/11/2024.
-//
-
 import SwiftUI
 
 @main
 struct FitGluApp: App {
+    init() {
+        // Этот код выполнится при запуске приложения.
+        print("iPhone: FitGluApp init — приложение запущено!")
+        
+        // Если у вас есть класс PhoneConnectivityProvider:
+        _ = PhoneConnectivityProvider.shared
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()

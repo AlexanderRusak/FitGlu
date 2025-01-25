@@ -114,6 +114,7 @@ class FatBurningManager: ObservableObject {
         // 2. Остановка HealthKit мониторинга
         healthDataManager.stopMonitoringHeartRate()
         healthDataManager.stopMonitoringBloodGlucose()
+        TrainingLogDBManager.shared.syncAllUnSynced()
     }
 
     // MARK: - Логика зон

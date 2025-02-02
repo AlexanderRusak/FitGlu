@@ -171,39 +171,78 @@ public class TrainingLogDBManager {
         }
         return results
     }
-
     
-    // MARK: - Sync Logic (только watchOS)
-    #if os(watchOS)
-    public func syncAllUnSynced() {
-        let unsyncedList = getUnSyncedFinishedTrainings()
-        guard !unsyncedList.isEmpty else {
-            print("No unsynced finished trainings.")
-            return
+    public func getTrainingWithHeartRates(trainingID: Int64) -> (training: TrainingRow?, heartRates: [HeartRateLogRow]) {
+        var training: TrainingRow?
+        var heartRates: [HeartRateLogRow] = []
+        
+        // Запрос тренировки
+        let queryTraining = tableTrainingLog.filter(colID == trainingID)
+        do {
+            if let row = try db.pluck(queryTraining) {
+                let idVal = try row.get(colID)
+                let typeVal = try row.get(colType)
+                let startVal = try row.get(colStartDate)
+                let endVal = try row.get(colEndDate) ?? 0
+
+                training = TrainingRow(
+                    id: idVal,
+                    type: typeVal,
+                    startTime: startVal,
+                    endTime: endVal
+                )
+            }
+        } catch {
+            print("❌ getTrainingWithHeartRates error (training): \(error)")
         }
         
-        for training in unsyncedList {
-            let packet: [String: Any] = [
-                "action": "finishWorkout",
-                "localID": training.id,
-                "type": training.type,
-                "startTime": training.startTime,
-                "endTime": training.endTime
-            ]
-            
-            if WCSession.default.isReachable {
-                WCSession.default.sendMessage(packet, replyHandler: { response in
-                    if let status = response["status"] as? String, status == "ok" {
-                        self.markSynced(training.id)
-                    }
-                }, errorHandler: { err in
-                    print("syncAllUnSynced error for training=\(training.id): \(err)")
-                })
-            } else {
-                print("Phone not reachable, stop syncAllUnSynced.")
-                break
-            }
+        // Запрос пульсовых данных
+        let queryHeartRates = HeartRateLogDBManager.shared.getHeartRates(for: trainingID)
+        heartRates = queryHeartRates
+        
+        return (training, heartRates)
+    }
+    
+    // MARK: - Sync Logic (только watchOS)
+#if os(watchOS)
+public func syncAllUnSynced() {
+    let unsyncedTrainings = getUnSyncedFinishedTrainings()
+    guard !unsyncedTrainings.isEmpty else {
+        print("No unsynced trainings.")
+        return
+    }
+    
+    for training in unsyncedTrainings {
+        let heartRates = HeartRateLogDBManager.shared.getUnSyncedHeartRates(for: training.id)
+        print("⌚ Syncing Heart Rates: \(heartRates) for Training ID=\(training.id)")
+
+        let heartRateData = heartRates.map { ["timestamp": $0.timestamp, "value": $0.heartRate] }
+        
+        let packet: [String: Any] = [
+            "action": "finishWorkout",
+            "trainingID": training.id,
+            "type": training.type,
+            "startTime": training.startTime,
+            "endTime": training.endTime,
+            "heartRates": heartRateData
+        ]
+        
+        print("⌚ Sending data to iPhone: \(packet)")
+
+        if WCSession.default.isReachable {
+            WCSession.default.sendMessage(packet, replyHandler: { response in
+                if let status = response["status"] as? String, status == "ok" {
+                    self.markSynced(training.id)
+                    HeartRateLogDBManager.shared.markSyncedHeartRates(for: training.id)
+                }
+            }, errorHandler: { error in
+                print("❌ Sync error for training \(training.id): \(error)")
+            })
+        } else {
+            print("❌ Phone not reachable, stopping sync.")
+            break
         }
     }
-    #endif
+}
+#endif
 }

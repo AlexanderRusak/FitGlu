@@ -29,42 +29,50 @@ class PhoneConnectivityProvider: NSObject, ObservableObject, WCSessionDelegate {
     func session(_ session: WCSession,
                  activationDidCompleteWith activationState: WCSessionActivationState,
                  error: Error?) {
-        print("iPhone: session activated, state=\(activationState.rawValue), err=\(String(describing: error))")
+        print("📲 iPhone: session activated, state=\(activationState.rawValue), err=\(String(describing: error))")
     }
     
     func sessionReachabilityDidChange(_ session: WCSession) {
-        print("iPhone: isReachable=\(session.isReachable)")
+        print("📲 iPhone: isReachable=\(session.isReachable)")
     }
     
     // Приходят сообщения "часы -> телефон"
-    func session(_ session: WCSession, didReceiveMessage message: [String : Any],
-                 replyHandler: @escaping ([String : Any]) -> Void) {
-        print("iPhone got message: \(message)")
-        
-        // Сохраним для UI
-        DispatchQueue.main.async {
-            self.lastMessage = message
-        }
+    func session(_ session: WCSession, didReceiveMessage message: [String: Any],
+                 replyHandler: @escaping ([String: Any]) -> Void) {
+        print("📲 iPhone got message: \(message)")
         
         guard let action = message["action"] as? String else { return }
         if action == "finishWorkout" {
-            // Parse data from the message
-            guard let localID = message["localID"] as? Int64,
+            guard let trainingID = message["trainingID"] as? Int64,
                   let type = message["type"] as? String,
                   let startTime = message["startTime"] as? Double,
                   let endTime = message["endTime"] as? Double else {
+                print("❌ Ошибка: Некорректные данные тренировки")
                 replyHandler(["status": "error", "message": "Invalid data"])
                 return
             }
             
-            // Store in local iPhone database
-            let trainingID = TrainingLogDBManager.shared.startTraining(type: TrainingType(rawValue: type) ?? .fatBurning)
-            if let id = trainingID {
+            print("✅ Данные тренировки: ID=\(trainingID), Type=\(type), Start=\(startTime), End=\(endTime)")
+            
+            // 💾 Сохранение тренировки в iPhone DB
+            let newTrainingID = TrainingLogDBManager.shared.startTraining(type: TrainingType(rawValue: type) ?? .fatBurning)
+            if let id = newTrainingID {
                 TrainingLogDBManager.shared.rawUpdateStartEnd(id, startTime, endTime)
             }
             
-            // Respond to the watch
+            // 💓 Сохранение пульса
+            if let heartRates = message["heartRates"] as? [[String: Any]] {
+                for hr in heartRates {
+                    if let timestamp = hr["timestamp"] as? Double,
+                       let value = hr["value"] as? Int {
+                        print("💓 Сохранение HR: \(value) BPM в \(timestamp)")
+                        HeartRateLogDBManager.shared.insertHeartRate(trainingID: trainingID, hrValue: value, timestamp: timestamp)
+                    }
+                }
+            }
+
             replyHandler(["status": "ok"])
         }
     }
+
 }

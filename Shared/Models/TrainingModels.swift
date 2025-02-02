@@ -29,3 +29,19 @@ public struct TrainingRow {
         self.endTime = endTime
     }
 }
+
+public struct HeartRateLogRow {
+    public let id: Int64          // Уникальный ID записи пульса
+    public let trainingID: Int64  // ID тренировки (связь с training_log)
+    public let heartRate: Int     // Значение пульса
+    public let timestamp: Double  // Время фиксации пульса
+    public let isSynced: Bool     // Флаг синхронизации (с телефона)
+    
+    public init(id: Int64, trainingID: Int64, heartRate: Int, timestamp: Double, isSynced: Bool) {
+        self.id = id
+        self.trainingID = trainingID
+        self.heartRate = heartRate
+        self.timestamp = timestamp
+        self.isSynced = isSynced
+    }
+}

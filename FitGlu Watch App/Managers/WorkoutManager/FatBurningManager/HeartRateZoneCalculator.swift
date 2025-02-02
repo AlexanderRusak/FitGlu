@@ -20,8 +20,6 @@ struct HeartRateZonesCalculator {
             return TrainingZone(lowerBound: 0.5 * Double(maxHeartRate), upperBound: 0.65 * Double(maxHeartRate))
         case .cardio:
             return TrainingZone(lowerBound: 0.65 * Double(maxHeartRate), upperBound: 0.85 * Double(maxHeartRate))
-        case .highIntensity:
-            return TrainingZone(lowerBound: 0.85 * Double(maxHeartRate), upperBound: Double(maxHeartRate))
         case .strength:
             return TrainingZone(lowerBound: 0.75 * Double(maxHeartRate), upperBound: 0.9 * Double(maxHeartRate))
         }

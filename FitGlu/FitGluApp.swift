@@ -8,6 +8,12 @@ struct FitGluApp: App {
         
         // Если у вас есть класс PhoneConnectivityProvider:
         _ = PhoneConnectivityProvider.shared
+        
+        GlucoseDataManager.shared.requestAuthorization { success in
+                   if success {
+                       GlucoseDataManager.shared.subscribeGlucose()
+                   }
+               }
     }
     
     var body: some Scene {

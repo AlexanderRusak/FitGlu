@@ -65,6 +65,16 @@
 		708E05872CF352A500489532 /* FitGlu Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "FitGlu Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		70A43A622D909D5B00C3514B /* Exceptions for "FitGlu" folder in "FitGlu" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 708E054E2CF352A400489532 /* FitGlu */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		70611A572D443625006E4B37 /* Shared */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -73,6 +83,9 @@
 		};
 		708E05512CF352A400489532 /* FitGlu */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				70A43A622D909D5B00C3514B /* Exceptions for "FitGlu" folder in "FitGlu" target */,
+			);
 			path = FitGlu;
 			sourceTree = "<group>";
 		};
@@ -654,8 +667,11 @@
 				DEVELOPMENT_TEAM = G63BL4UP5A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FitGlu/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FitGlu;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Мы используем данные глюкозы для анализа тренировок.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Описание цели использования данных HealthKit";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -688,8 +704,11 @@
 				DEVELOPMENT_TEAM = G63BL4UP5A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FitGlu/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FitGlu;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Мы используем данные глюкозы для анализа тренировок.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Описание цели использования данных HealthKit";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -66,7 +66,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		7046A4222D7E3A3F00B93D1A /* Exceptions for "FitGlu" folder in "FitGlu" target */ = {
+		70A43A622D909D5B00C3514B /* Exceptions for "FitGlu" folder in "FitGlu" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -84,7 +84,7 @@
 		708E05512CF352A400489532 /* FitGlu */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				7046A4222D7E3A3F00B93D1A /* Exceptions for "FitGlu" folder in "FitGlu" target */,
+				70A43A622D909D5B00C3514B /* Exceptions for "FitGlu" folder in "FitGlu" target */,
 			);
 			path = FitGlu;
 			sourceTree = "<group>";
@@ -670,8 +670,8 @@
 				INFOPLIST_FILE = FitGlu/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FitGlu;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "App needs access to your blood glucose data for training analysis.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "App writes heart rate data to HealthKit.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Мы используем данные глюкозы для анализа тренировок.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Описание цели использования данных HealthKit";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -707,8 +707,8 @@
 				INFOPLIST_FILE = FitGlu/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FitGlu;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "App needs access to your blood glucose data for training analysis.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "App writes heart rate data to HealthKit.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Мы используем данные глюкозы для анализа тренировок.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Описание цели использования данных HealthKit";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct FitGluApp: App {
     init() {
+        @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
         // Этот код выполнится при запуске приложения.
         print("iPhone: FitGluApp init — приложение запущено!")
         
@@ -10,15 +11,16 @@ struct FitGluApp: App {
         _ = PhoneConnectivityProvider.shared
         
         GlucoseDataManager.shared.requestAuthorization { success in
-                   if success {
-                       GlucoseDataManager.shared.subscribeGlucose()
-                   }
-               }
+            if success {
+                GlucoseDataManager.shared.subscribeGlucose()
+            }
+        }
     }
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()
         }
     }
 }
+

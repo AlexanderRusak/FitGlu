@@ -16,27 +16,8 @@ class GlucoseDataManager {
         healthStore.requestAuthorization(toShare: [], read: [glucoseType]) { success, error in
             if success {
                 print("✅ iPhone: Глюкоза - разрешение получено.")
-                
-                // Включаем фоновые доставки (background delivery)
-                self.enableBackgroundDelivery { bgSuccess in
-                    if bgSuccess {
-                        print("✅ iPhone: Background Delivery включён для глюкозы.")
-                    } else {
-                        print("❌ iPhone: Не удалось включить Background Delivery для глюкозы.")
-                    }
-                }
             } else {
                 print("❌ iPhone: нет доступа к глюкозе: \(error?.localizedDescription ?? "")")
-            }
-            completion(success)
-        }
-    }
-    
-    // Подключение фоновых доставок (чтобы получать уведомления, даже когда приложение в фоне)
-    private func enableBackgroundDelivery(completion: @escaping (Bool) -> Void) {
-        healthStore.enableBackgroundDelivery(for: glucoseType, frequency: .immediate) { success, error in
-            if let error = error {
-                print("❌ Ошибка enableBackgroundDelivery: \(error.localizedDescription)")
             }
             completion(success)
         }
@@ -48,6 +29,7 @@ class GlucoseDataManager {
             print("ℹ️ Уже подписаны на глюкозу.")
             return
         }
+        
         let query = HKObserverQuery(sampleType: glucoseType, predicate: nil) {
             [weak self] _, completionHandler, error in
             if let error = error {
@@ -56,17 +38,26 @@ class GlucoseDataManager {
                 return
             }
             print("🔄 iPhone: Получили уведомление об обновлении глюкозы.")
-            self?.fetchLatestGlucose()  // вызываем выборку новых данных
+            self?.fetchLatestGlucose()
             completionHandler()
         }
+        
         healthStore.execute(query)
         observerQuery = query
         print("✅ iPhone: Подписаны на глюкозу.")
+        
+        // 🔁 Важно для фоновой доставки!
+        healthStore.enableBackgroundDelivery(for: glucoseType, frequency: .immediate) { success, error in
+            if success {
+                print("✅ Background delivery enabled for glucose")
+            } else {
+                print("❌ Failed to enable background delivery: \(error?.localizedDescription ?? "")")
+            }
+        }
     }
 
     // Выборка данных
     func fetchLatestGlucose() {
-        // Пример: берём за последние 24 часа
         let start = Date(timeIntervalSinceNow: -24 * 3600)
         let pred = HKQuery.predicateForSamples(withStart: start, end: nil, options: .strictStartDate)
 

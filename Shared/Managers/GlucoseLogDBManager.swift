@@ -27,17 +27,13 @@ public class GlucoseLogDBManager {
         print("✅ GlucoseLogDBManager: created table glucose_log (if not existed)")
     }
 
+    // Вставка данных без дубликатов
     public func insertGlucose(timestamp: Double, value: Double) {
-        // Проверяем, есть ли уже запись с таким timestamp
         if glucoseExists(timestamp: timestamp) {
             print("⚠️ GlucoseLogDBManager: запись с timestamp \(timestamp) уже есть, пропускаем")
             return
         }
-
-        let insert = tableGlucose.insert(
-            colTimestamp <- timestamp,
-            colGlucoseValue <- value
-        )
+        let insert = tableGlucose.insert(colTimestamp <- timestamp, colGlucoseValue <- value)
         do {
             let rowID = try db.run(insert)
             print("✅ GlucoseLogDBManager: inserted row \(rowID), glucose=\(value)")
@@ -45,7 +41,7 @@ public class GlucoseLogDBManager {
             print("❌ GlucoseLogDBManager insertGlucose error: \(error)")
         }
     }
-    
+
     // Проверка наличия записи
     private func glucoseExists(timestamp: Double) -> Bool {
         let query = tableGlucose.filter(colTimestamp == timestamp)
@@ -56,7 +52,7 @@ public class GlucoseLogDBManager {
             return false
         }
     }
-    
+
     // Получение всех данных
     public func getAllGlucose() -> [GlucoseRow] {
         var results: [GlucoseRow] = []
@@ -72,11 +68,13 @@ public class GlucoseLogDBManager {
         }
         return results
     }
-    
+
+    // Получение глюкозы в заданном интервале (по тренировке)
     public func getGlucoseInRange(start: Double, end: Double) -> [GlucoseRow] {
         var results: [GlucoseRow] = []
+        print("🔍 Searching glucose in range: Start=\(Date(timeIntervalSince1970: start)), End=\(Date(timeIntervalSince1970: end))")
         let query = tableGlucose.filter(colTimestamp >= start && colTimestamp <= end)
-        
+
         do {
             for row in try db.prepare(query) {
                 let idVal = try row.get(colID)
@@ -87,16 +85,7 @@ public class GlucoseLogDBManager {
         } catch {
             print("❌ Error getGlucoseInRange: \(error)")
         }
-        
         return results
     }
 }
 
-
-
-
-public struct GlucoseRow {
-    public let id: Int64
-    public let timestamp: Double
-    public let glucoseValue: Double
-}

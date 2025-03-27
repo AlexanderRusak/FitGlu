@@ -4,6 +4,7 @@ import HealthKit
 class HealthDataManager {
     private let healthKitAuthorizationManager = HealthKitAuthorizationManager()
     private let heartRateManager = HeartRateManager()
+    private let bloodGlucoseManager = BloodGlucoseManager()
 
     private var currentSample: TrainingSample?
     private var sequenceIterator: AnyIterator<(String, Int, Int)>?
@@ -125,12 +126,20 @@ class HealthDataManager {
 
        /// Запуск мониторинга глюкозы
        func startMonitoringBloodGlucose() {
+           #if targetEnvironment(simulator)
            startSimulatedBloodGlucose()
+           #else
+           startRealBloodGlucose()
+           #endif
        }
 
        /// Остановка мониторинга глюкозы
        func stopMonitoringBloodGlucose() {
+           #if targetEnvironment(simulator)
            stopSimulatedBloodGlucose()
+           #else
+           stopRealBloodGlucose()
+           #endif
        }
 
        // MARK: - Симуляция глюкозы
@@ -154,5 +163,18 @@ class HealthDataManager {
            glucoseTimer?.invalidate()
            glucoseTimer = nil
            glucoseIterator = nil
+       }
+
+       // MARK: - Реальные данные глюкозы
+       private func startRealBloodGlucose() {
+           // Подключаем реальный BloodGlucoseManager
+           bloodGlucoseManager.onBloodGlucoseUpdate = { [weak self] glucoseValue in
+               self?.onBloodGlucoseUpdate?(glucoseValue)
+           }
+           bloodGlucoseManager.startBloodGlucoseMonitoring()
+       }
+
+       private func stopRealBloodGlucose() {
+           bloodGlucoseManager.stopBloodGlucoseMonitoring()
        }
 }

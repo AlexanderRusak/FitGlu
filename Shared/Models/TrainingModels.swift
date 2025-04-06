@@ -8,11 +8,12 @@
 import Foundation
 
 /// Тип тренировки
-public enum TrainingType: String {
+public enum TrainingType: String, CaseIterable, Identifiable {
     case fatBurning = "FatBurning"
     case cardio = "Cardio"
     case strength = "Strength"
-    // добавьте при необходимости
+
+    public var id: String { self.rawValue }
 }
 
 /// Структура, описывающая запись тренировки, прочитанную из БД

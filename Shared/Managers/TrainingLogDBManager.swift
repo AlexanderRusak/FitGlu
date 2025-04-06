@@ -203,6 +203,43 @@ public class TrainingLogDBManager {
         return (training, heartRates)
     }
     
+    public func insertTraining(training: TrainingRow,
+                               completion: @escaping (Bool, TrainingRow?) -> Void)
+    {
+        do {
+            // Подготовим INSERT-запрос
+            // Если endTime == 0, то считаем, что тренировка пока «открытая» и пишем nil.
+            // Если endTime > 0, значит пользователь задал время окончания, и мы запишем его в базу.
+            let endDateValue: Double? = (training.endTime == 0) ? nil : training.endTime
+            
+            let insert = tableTrainingLog.insert(
+                colType <- training.type,
+                colStartDate <- training.startTime,
+                colEndDate <- endDateValue,
+                colIsSynced <- false
+            )
+            
+            // Выполним вставку
+            let rowID = try db.run(insert)
+            print("TrainingLogDBManager: Inserted training id=\(rowID) (type=\(training.type))")
+            
+            // Формируем объект с актуальным ID (присвоенным базой)
+            let insertedTraining = TrainingRow(
+                id: rowID,
+                type: training.type,
+                startTime: training.startTime,
+                endTime: training.endTime
+            )
+            
+            // Возвращаем успех и вставленный объект
+            completion(true, insertedTraining)
+        } catch {
+            print("insertTraining error: \(error)")
+            completion(false, nil)
+        }
+    }
+
+    
     // MARK: - Sync Logic (только watchOS)
 #if os(watchOS)
 public func syncAllUnSynced() {

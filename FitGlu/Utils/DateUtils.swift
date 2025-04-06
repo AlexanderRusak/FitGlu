@@ -6,3 +6,13 @@ func formatDate(_ timestamp: Double) -> String {
     formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
     return formatter.string(from: date)
 }
+
+extension Date {
+    var startOfDay: Date {
+        Calendar.current.startOfDay(for: self)
+    }
+
+    var endOfDay: Date {
+        Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+    }
+}

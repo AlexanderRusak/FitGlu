@@ -55,7 +55,7 @@ public class HeartRateLogDBManager {
             return nil
         }
     }
-    
+        
     public func getUnSyncedHeartRates(for trainingID: Int64) -> [HeartRateLogRow] {
         var results: [HeartRateLogRow] = []
         let query = tableHeartRateLog.filter(colTrainingID == trainingID && colIsSynced == false)

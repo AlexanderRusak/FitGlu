@@ -79,3 +79,11 @@ struct AllGlucoseScreen: View {
         .padding()
     }
 }
+
+private func formatDate(_ timestamp: Double) -> String {
+    let date = Date(timeIntervalSince1970: timestamp)
+    let f = DateFormatter()
+    f.dateStyle = .short          // «28.04.24»
+    f.timeStyle = .medium         // «14:37:05»
+    return f.string(from: date)
+}

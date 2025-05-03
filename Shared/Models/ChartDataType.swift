@@ -11,3 +11,10 @@ public struct ChartDataPoint: Identifiable {
     public let timestamp: Double
     public let value: Double
 }
+
+struct HRPoint: Identifiable {
+    let id = UUID()
+    let time:  Date        // X-координата
+    let bpm:   Int         // Y-координата
+    let inWorkout: Bool    // «точка относится к любой тренировке?»
+}

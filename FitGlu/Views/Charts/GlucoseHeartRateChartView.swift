@@ -1,256 +1,250 @@
 import SwiftUI
 import Charts
 
+// MARK: – Main chart view
 struct GlucoseHeartRateChartView: View {
-    var glucoseData: [GlucoseRow]
-    var heartRateData: [HeartRateLogRow]
-    var hrDailyPoints : [HRPoint]
-    var trainings: [TrainingRow]      // Массив тренировок (интервалы тренеровок)
-    var domain: ClosedRange<Date>     // Исходный временной диапазон (например, за сутки)
-    
-    // Состояния для зума и смещения по оси X:
-    @State private var scale: CGFloat = 1.0    // Коэффициент зума: 1.0 – исходный масштаб, > 1.0 – приближение
-    @State private var offset: TimeInterval = 0 // Смещение (панорамирование) по оси X, в секундах
-    
-    // Состояния для интерактивной аннотации
-    @State private var selectedTime: Date? = nil
-    @State private var nearestGlucose: GlucoseRow? = nil
-    @State private var nearestHeartRate: HeartRateLogRow? = nil
-    
-    // Исходная продолжительность интервала (в секундах)
-    private var originalDomainInterval: TimeInterval {
-        domain.upperBound.timeIntervalSince(domain.lowerBound)
-    }
-    
-    /// Вычисленный домен для оси X с учетом зума и панорамирования
-    private var currentDomain: ClosedRange<Date> {
-        let center = domain.lowerBound.addingTimeInterval(originalDomainInterval / 2)
-        let halfWidth = originalDomainInterval / (2 * Double(scale))
-        let newCenter = center.addingTimeInterval(offset)
-        let lower = newCenter.addingTimeInterval(-halfWidth)
-        let upper = newCenter.addingTimeInterval(halfWidth)
-        return lower ... upper
-    }
-    
-    // Максимальные значения по оси Y для глюкозы и пульса
-    private var yMaxGlucose: Double {
-        (glucoseData.map { $0.glucoseValue }.max() ?? 10) * 1.2
-    }
-    
-    private var yMaxHeartRate: Double {
-        (Double(heartRateData.map { $0.heartRate }.max() ?? 120)) * 1.2
-    }
-    
-    // Чтобы обе серии умещались на одной оси, вычисляем объединенный максимум
-    private var combinedMax: Double {
-        max(yMaxGlucose, yMaxHeartRate)
-    }
-    
-    // Вычисляем уникальные типы тренировок для формирования легенды
-    private var trainingLegends: [TrainingType] {
-        let types = trainings.compactMap { TrainingType(rawValue: $0.type) }
-        return Array(Set(types)).sorted { $0.rawValue < $1.rawValue }
-    }
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            // Над графиком – пояснение по единицам измерения оси Y
-            Text("Left Axis: Glucose (mg/dL) / Heart Rate (bpm)")
-                .font(.subheadline)
-                .foregroundColor(.gray)
-            
-            // Основной график
-            Chart {
-                // Рисуем цветные полосы для каждого тренировочного интервала
-                ForEach(trainings, id: \.id) { t in
-                    let startDate = Date(timeIntervalSince1970: t.startTime)
-                    let endDate = Date(timeIntervalSince1970: t.endTime)
-                    RectangleMark(
-                        xStart: .value("Training Start", startDate),
-                        xEnd: .value("Training End", endDate),
-                        yStart: .value("Min", 0),
-                        yEnd: .value("Max", combinedMax)
-                    )
-                    .foregroundStyle(trainingColor(for: t).opacity(0.2))
-                    .zIndex(-1)
-                }
-                
-                // Линия данных глюкозы
-                ForEach(glucoseData, id: \.id) { entry in
-                    LineMark(
-                        x: .value("Time", Date(timeIntervalSince1970: entry.timestamp)),
-                        y: .value("Glucose", entry.glucoseValue)
-                    )
-                    .foregroundStyle(.red)
-                    .interpolationMethod(.catmullRom)
-                }
-                
-                // 1) HR-точки внутри тренировок – яркие
-                ForEach(hrDailyPoints.filter { $0.inWorkout }) { p in
-                    PointMark(
-                        x: .value("Time", p.time),
-                        y: .value("Heart Rate", Double(p.bpm))
-                    )
-                    .foregroundStyle(.blue)
-                    .symbolSize(30)
-                }
 
-                // 2) HR-точки вне тренировок – тусклые/серые
-                ForEach(hrDailyPoints.filter { !$0.inWorkout }) { p in
-                    PointMark(
-                        x: .value("Time", p.time),
-                        y: .value("Heart Rate", Double(p.bpm))
-                    )
-                    .foregroundStyle(.gray.opacity(0.5))
-                    .symbolSize(20)
-                }
+    /* tuneables */
+    private let panDamping     : Double  = 0.01   // чем меньше – тем «тяжелее» скролл
+    private let zoomAmplifier  : CGFloat = 4      // >1 усиливает pinch‑zoom
+    private let maxZoom        : ClosedRange<CGFloat> = 1...40
+
+    /* input */
+    let glucoseData   : [GlucoseRow]
+    let heartRateData : [HeartRateLogRow]
+    let hrDailyPoints : [HRPoint]
+    let trainings     : [TrainingRow]
+    let domain        : ClosedRange<Date>      // период (сутки)
+
+    /* zoom / pan state */
+    @State private var lastGesture : CGFloat = 1
+    @State private var scale       : CGFloat = 1
+    @State private var offset      : TimeInterval = 0
+    @State private var plotWidth   : CGFloat = 1      // вычисляется через overlay
+
+    /* tooltip state */
+    @State private var selectedTime      : Date?
+    @State private var nearestGlucoseVal : (time: Date, value: Double)?
+    @State private var nearestHRVal      : (time: Date, value: Double)?
+
+    // MARK: – Derived helpers
+    private var dayInterval: TimeInterval { domain.upperBound.timeIntervalSince(domain.lowerBound) }
+
+    private var currentDomain: ClosedRange<Date> {
+        let center = domain.lowerBound.addingTimeInterval(dayInterval / 2 + offset)
+        let half   = dayInterval / (2 * Double(scale))
+        return center.addingTimeInterval(-half) ... center.addingTimeInterval(half)
+    }
+
+    private var yMax: Double {
+        let gMax = glucoseData.map(\.glucoseValue).max() ?? 10
+        let hMax = Double(heartRateData.map(\.heartRate).max() ?? 120)
+        return max(gMax, hMax) * 1.2
+    }
+
+    // MARK: – Body
+    var body: some View {
+        VStack(spacing: 6) {
+            Text("Left Axis: Glucose (mg/dL) · Heart Rate (bpm)")
+                .font(.subheadline).foregroundColor(.gray)
+
+            Chart {
+                trainingRects
+                glucoseLine
+                hrPoints(inWorkout: true)
+                hrPoints(inWorkout: false)
             }
-            // Устанавливаем ось X по вычисленному домену
+            .onAppear {
+                       // 🔸 Выводим именно то, что график видит
+                       print("""
+                           ── Chart INPUT ──
+                             trainings:      \(trainings.count)
+                             HR points:      \(heartRateData.count)
+                             HR ‘daily’:     \(hrDailyPoints.count)
+                             glucose points: \(glucoseData.count)
+                           ────────────────
+                           """)
+                   }
             .chartXScale(domain: currentDomain)
-            // Устанавливаем ось Y от 0 до объединенного максимума
-            .chartYScale(domain: 0...combinedMax)
-            // Отображаем ось Y только слева с числовыми метками (в английском виде числа)
-            .chartYAxis {
-                AxisMarks(position: .leading) { value in
-                    if let doubleValue = value.as(Double.self) {
-                        AxisValueLabel("\(Int(doubleValue))")
-                    }
-                }
-            }
-            // Обработка жестов для аннотации – при касании определяем ближайшие записи
-            .chartOverlay { proxy in
-                GeometryReader { geometry in
-                    Rectangle()
-                        .fill(Color.clear)
-                        .contentShape(Rectangle())
-                        .gesture(
-                            DragGesture(minimumDistance: 0)
-                                .onChanged { gesture in
-                                    let location = gesture.location
-                                    if let date: Date = proxy.value(atX: location.x) {
-                                        selectedTime = date
-                                        // По оси X находим ближайшую запись глюкозы
-                                        if let nearestG = glucoseData.min(by: { abs($0.timestamp - date.timeIntervalSince1970) < abs($1.timestamp - date.timeIntervalSince1970) }) {
-                                            nearestGlucose = nearestG
-                                        }
-                                        // По оси X находим ближайшую запись пульса
-                                        if let nearestHR = heartRateData.min(by: { abs($0.timestamp - date.timeIntervalSince1970) < abs($1.timestamp - date.timeIntervalSince1970) }) {
-                                            nearestHeartRate = nearestHR
-                                        }
-                                    }
-                                }
-                                .onEnded { _ in
-                                    // Если нужно, можно убрать аннотацию по окончании жеста:
-                                    // selectedTime = nil
-                                    // nearestGlucose = nil
-                                    // nearestHeartRate = nil
-                                }
-                        )
-                }
-            }
-            // Overlay с аннотацией; все надписи на английском
-            .overlay {
-                if let selTime = selectedTime, nearestGlucose != nil || nearestHeartRate != nil {
-                    VStack(alignment: .leading, spacing: 4) {
-                        if let hr = nearestHeartRate {
-                            Text("Pulse: \(hr.heartRate) bpm")
-                        }
-                        if let gl = nearestGlucose {
-                            Text("Glucose: \(gl.glucoseValue, specifier: "%.1f") mg/dL")
-                        }
-                        Text("Time: \(formattedTime(selTime))")
-                    }
-                    .font(.caption)
-                    .padding(8)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.white).shadow(radius: 4))
-                    // Фиксированное позиционирование; можно доработать, чтобы позиционировать рядом с касанием
-                    .position(x: 80, y: 40)
-                }
-            }
+            .chartYScale(domain: 0...yMax)
+            .chartYAxis { AxisMarks(position: .leading) { v in
+                if let d = v.as(Double.self) { AxisValueLabel("\(Int(d))") }
+            }}
+            .chartOverlay { proxyOverlay($0) }
             .frame(maxWidth: .infinity)
-            .border(Color.gray.opacity(0.3))
-            
-            // Слайдер для зума
-            VStack {
-                Text("Zoom: \(String(format: "%.1f", scale))x")
-                    .font(.subheadline)
-                Slider(value: $scale, in: 1...10, step: 0.1)
-                    .padding(.horizontal)
-            }
-            
-            // Слайдер для панорамирования
-            VStack {
-                Text("Pan: \(Int(offset)) sec")
-                    .font(.subheadline)
-                Slider(value: $offset, in: -originalDomainInterval/2 ... originalDomainInterval/2, step: 1)
-                    .padding(.horizontal)
-            }
-            
-            // Легенда: две части – для данных и для тренинговых интервалов
-            legendView
+            .border(.gray.opacity(0.3))
+
+            legend
         }
         .padding(.horizontal)
     }
-    
-    /// Форматирование времени в формате "HH:mm:ss" (на английском)
-    private func formattedTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss"
-        return formatter.string(from: date)
+}
+
+// MARK: – Chart building blocks
+private extension GlucoseHeartRateChartView {
+
+    // training rectangles
+    var trainingRects: some ChartContent {
+        ForEach(trainings, id: \.id) { t in
+            RectangleMark(
+                xStart: .value("Start", Date(timeIntervalSince1970: t.startTime)),
+                xEnd:   .value("End",   Date(timeIntervalSince1970: t.endTime)),
+                yStart: .value("Min", 0),
+                yEnd:   .value("Max", yMax)
+            )
+            .foregroundStyle(TrainingPalette.color(for: t.type).opacity(0.20))
+            .zIndex(-1)
+        }
     }
-    
-    /// Легенда под графиком: блок для Glucose / Heart Rate и блок для Training types
-    private var legendView: some View {
-        VStack {
-            HStack(spacing: 16) {
-                HStack {
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 12, height: 12)
-                    Text("Glucose (mg/dL)")
-                        .font(.footnote)
+
+    // glucose curve
+    var glucoseLine: some ChartContent {
+        ForEach(glucoseData, id: \.id) { g in
+            LineMark(
+                x: .value("Time", Date(timeIntervalSince1970: g.timestamp)),
+                y: .value("Glucose", g.glucoseValue)
+            )
+            .interpolationMethod(.catmullRom)
+            .foregroundStyle(.red)
+        }
+    }
+
+    // heart‑rate dots
+    @ChartContentBuilder
+    func hrPoints(inWorkout: Bool) -> some ChartContent {
+        ForEach(hrDailyPoints.filter { $0.inWorkout == inWorkout }) { p in
+            PointMark(
+                x: .value("Time", p.time),
+                y: .value("Heart Rate", Double(p.bpm))
+            )
+            .symbolSize(inWorkout ? 32 : 22)
+            .foregroundStyle(inWorkout ? .blue : .gray.opacity(0.45))
+        }
+    }
+}
+
+// MARK: – Overlay & gestures
+private extension GlucoseHeartRateChartView {
+
+    @ViewBuilder
+    func proxyOverlay(_ proxy: ChartProxy) -> some View {
+        GeometryReader { geo in
+            Color.clear
+                .onAppear { plotWidth = proxy.plotAreaSize.width }
+                .onChange(of: proxy.plotAreaSize) { new, _ in plotWidth = new.width }
+
+                .contentShape(Rectangle())
+                // tap → clear tooltip
+                .simultaneousGesture(
+                    TapGesture().onEnded { _ in clearTooltip() }
+                )
+                // drag → tooltip + pan
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { g in
+                            updateTooltip(at: g.location, proxy: proxy)
+
+                            let secPerPt = dayInterval / Double(plotWidth)
+                            offset -= Double(g.translation.width) * secPerPt * panDamping
+                            offset = offset.clamped(to: -dayInterval/2 ... dayInterval/2)
+                        }
+                )
+        }
+        // pinch‑zoom (separate gesture)
+        .gesture(
+            MagnificationGesture()
+                .onChanged { value in
+                    let ratio = value / lastGesture
+                    lastGesture = value
+                    let amp    = pow(ratio, zoomAmplifier)
+                    scale = (scale * amp).clamped(to: maxZoom)
                 }
-                HStack {
-                    Circle()
-                        .fill(Color.blue)
-                        .frame(width: 12, height: 12)
-                    Text("Heart Rate (bpm)")
-                        .font(.footnote)
+                .onEnded { _ in lastGesture = 1 }
+        )
+        .overlay(alignment: .topLeading) { tooltip }
+    }
+
+    // tooltip view
+    var tooltip: some View {
+        Group {
+            if let t = selectedTime {
+                VStack(alignment: .leading, spacing: 4) {
+                    if let g = nearestGlucoseVal {
+                        Text("Glucose: \(g.value, specifier: "%.1f") mg/dL")
+                    }
+                    if let h = nearestHRVal {
+                        Text("Pulse: \(Int(h.value)) bpm")
+                    }
+                    Text("Time: \(timeFmt.string(from: t))")
                 }
+                .font(.caption)
+                .padding(8)
+                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                .shadow(radius: 2)
+                .padding(.leading, 60)
             }
-            .padding(.bottom, 4)
+        }
+    }
+
+    // tooltip helpers
+    func updateTooltip(at loc: CGPoint, proxy: ChartProxy) {
+        guard let d: Date = proxy.value(atX: loc.x) else { return }
+        selectedTime = d
+
+        if let g = glucoseData.min(by: { abs($0.timestamp - d.timeIntervalSince1970) <
+                                         abs($1.timestamp - d.timeIntervalSince1970) }) {
+            nearestGlucoseVal = (Date(timeIntervalSince1970: g.timestamp), g.glucoseValue)
+        }
+        if let h = heartRateData.min(by: { abs($0.timestamp - d.timeIntervalSince1970) <
+                                           abs($1.timestamp - d.timeIntervalSince1970) }) {
+            nearestHRVal = (Date(timeIntervalSince1970: h.timestamp), Double(h.heartRate))
+        }
+    }
+    func clearTooltip() {
+        selectedTime = nil
+        nearestGlucoseVal = nil
+        nearestHRVal = nil
+    }
+}
+
+// MARK: – Legend & misc
+private extension GlucoseHeartRateChartView {
+
+    var legend: some View {
+        VStack(spacing: 6) {
             HStack(spacing: 16) {
-                ForEach(trainingLegends, id: \.id) { type in
-                    HStack {
-                        Rectangle()
-                            .fill(trainingTypeColor(type))
-                            .frame(width: 12, height: 12)
-                        Text(type.rawValue)
-                            .font(.footnote)
+                legendDot(.red,  "Glucose")
+                legendDot(.blue, "Heart Rate")
+            }
+            let todayTypes = Array(Set(trainings.map(\.type.cleaned))).sorted()
+            if !todayTypes.isEmpty {
+                HStack(spacing: 16) {
+                    ForEach(todayTypes, id: \.self) { t in
+                        legendDot(TrainingPalette.color(for: t), t)
                     }
                 }
             }
         }
-        .padding(.top, 8)
+        .padding(.top, 4)
     }
-    
-    /// Функция, возвращающая цвет для конкретного тренинга на основе его типа
-    private func trainingColor(for training: TrainingRow) -> Color {
-        if let type = TrainingType(rawValue: training.type) {
-            return trainingTypeColor(type)
-        }
-        return .orange
-    }
-    
-    /// Функция для получения цвета по типу тренировки
-    private func trainingTypeColor(_ type: TrainingType) -> Color {
-        switch type {
-        case .fatBurning:
-            return .green
-        case .cardio:
-            return .red
-        case .strength:
-            return .blue
+
+    func legendDot(_ color: Color, _ text: String) -> some View {
+        HStack(spacing: 4) {
+            Circle().fill(color).frame(width: 10, height: 10)
+            Text(text).font(.footnote)
         }
     }
+
+    var timeFmt: DateFormatter {
+        let f = DateFormatter(); f.dateFormat = "HH:mm:ss"; return f
+    }
+}
+
+private extension Comparable {
+    func clamped(to range: ClosedRange<Self>) -> Self {
+        min(max(self, range.lowerBound), range.upperBound)
+    }
+}
+private extension String {
+    var cleaned: String { trimmingCharacters(in: .whitespacesAndNewlines) }
 }

@@ -1,16 +1,16 @@
-// Shared/HealthKit/HKWorkoutActivityType+Readable.swift
 import HealthKit
 
 extension HKWorkoutActivityType {
-    var readableName: String {
+    /// Имя как в Workout.app (English locale)
+    var workoutName: String {
         switch self {
-        case .running:                     return "Running"
-        case .walking:                     return "Walking"
-        case .functionalStrengthTraining,
-             .traditionalStrengthTraining: return "Strength Training"
-        case .cycling:                     return "Cycling"
-        // добавляйте нужные вам варианты ↓
-        default:                           return "Other"
+        case .running:                      "Running"
+        case .walking:                      "Walking"
+        case .cycling:                      "Cycling"
+        case .functionalStrengthTraining:   "Functional Strength Training"
+        case .traditionalStrengthTraining:  "Traditional Strength Training"
+        // …добавляйте по мере необходимости…
+        default:                            "Other"
         }
     }
 }

@@ -172,36 +172,31 @@ public class TrainingLogDBManager {
         return results
     }
     
-    public func getTrainingWithHeartRates(trainingID: Int64) -> (training: TrainingRow?, heartRates: [HeartRateLogRow]) {
+    public func getTrainingWithHeartRates(trainingID: Int64)
+          -> (training: TrainingRow?, heartRates: [HeartRateLogRow])
+    {
+        // 1. Тренировка
         var training: TrainingRow?
-        var heartRates: [HeartRateLogRow] = []
-        
-        // Запрос тренировки
-        let queryTraining = tableTrainingLog.filter(colID == trainingID)
         do {
-            if let row = try db.pluck(queryTraining) {
-                let idVal = try row.get(colID)
-                let typeVal = try row.get(colType)
-                let startVal = try row.get(colStartDate)
-                let endVal = try row.get(colEndDate) ?? 0
-
+            let rowQ = tableTrainingLog.filter(colID == trainingID)
+            if let row = try db.pluck(rowQ) {
                 training = TrainingRow(
-                    id: idVal,
-                    type: typeVal,
-                    startTime: startVal,
-                    endTime: endVal
+                    id:         try row.get(colID),
+                    type:       try row.get(colType),
+                    startTime:  try row.get(colStartDate),
+                    endTime:    try row.get(colEndDate) ?? 0
                 )
             }
         } catch {
-            print("❌ getTrainingWithHeartRates error (training): \(error)")
+            print("❌ getTrainingWithHeartRates (training):", error)
         }
+
+        // 2. Сырые HR → адаптер → «плоские» HR
+        let raw   = HeartRateLogDBManager.shared.getHeartRates(for: trainingID)
         
-        // Запрос пульсовых данных
-        let queryHeartRates = HeartRateLogDBManager.shared.getHeartRates(for: trainingID)
-        heartRates = queryHeartRates
-        
-        return (training, heartRates)
+        return (training, raw)
     }
+
     
     public func insertTraining(training: TrainingRow,
                                completion: @escaping (Bool, TrainingRow?) -> Void)

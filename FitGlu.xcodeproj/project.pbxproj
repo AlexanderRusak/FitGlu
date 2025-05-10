@@ -13,6 +13,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		707487722DC587C300E79BEE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 708E05472CF352A400489532 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 708E05742CF352A500489532;
+			remoteInfo = "FitGlu Watch App";
+		};
 		708E05602CF352A500489532 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 708E05472CF352A400489532 /* Project object */;
@@ -26,13 +33,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = 708E054E2CF352A400489532;
 			remoteInfo = FitGlu;
-		};
-		708E05772CF352A500489532 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 708E05472CF352A400489532 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 708E05742CF352A500489532;
-			remoteInfo = "FitGlu Watch App";
 		};
 		708E05882CF352A500489532 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -66,6 +66,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		706A99932DC5840F003567C6 /* Exceptions for "Shared" folder in "FitGlu Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Providers/LocalDBProvider.swift,
+				Providers/PhoneConnectivityProvider.swift,
+			);
+			target = 708E05742CF352A500489532 /* FitGlu Watch App */;
+		};
 		70A43A622D909D5B00C3514B /* Exceptions for "FitGlu" folder in "FitGlu" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -78,6 +86,9 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		70611A572D443625006E4B37 /* Shared */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				706A99932DC5840F003567C6 /* Exceptions for "Shared" folder in "FitGlu Watch App" target */,
+			);
 			path = Shared;
 			sourceTree = "<group>";
 		};
@@ -190,15 +201,15 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 708E059F2CF352A500489532 /* Build configuration list for PBXNativeTarget "FitGlu" */;
 			buildPhases = (
-				708E054B2CF352A400489532 /* Sources */,
 				708E054C2CF352A400489532 /* Frameworks */,
 				708E054D2CF352A400489532 /* Resources */,
 				708E059E2CF352A500489532 /* Embed Watch Content */,
+				707487762DC5885400E79BEE /* Sources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				708E05782CF352A500489532 /* PBXTargetDependency */,
+				707487732DC587C300E79BEE /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				70611A572D443625006E4B37 /* Shared */,
@@ -400,7 +411,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		708E054B2CF352A400489532 /* Sources */ = {
+		707487762DC5885400E79BEE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -438,6 +449,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		707487732DC587C300E79BEE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 708E05742CF352A500489532 /* FitGlu Watch App */;
+			targetProxy = 707487722DC587C300E79BEE /* PBXContainerItemProxy */;
+		};
 		708E05612CF352A500489532 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 708E054E2CF352A400489532 /* FitGlu */;
@@ -447,11 +463,6 @@
 			isa = PBXTargetDependency;
 			target = 708E054E2CF352A400489532 /* FitGlu */;
 			targetProxy = 708E056A2CF352A500489532 /* PBXContainerItemProxy */;
-		};
-		708E05782CF352A500489532 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 708E05742CF352A500489532 /* FitGlu Watch App */;
-			targetProxy = 708E05772CF352A500489532 /* PBXContainerItemProxy */;
 		};
 		708E05892CF352A500489532 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -585,7 +596,7 @@
 				CODE_SIGN_ENTITLEMENTS = "FitGlu Watch App/FitGlu Watch App.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"FitGlu Watch App/Preview Content\"";
 				DEVELOPMENT_TEAM = G63BL4UP5A;
 				ENABLE_PREVIEWS = YES;
@@ -593,8 +604,8 @@
 				INFOPLIST_FILE = "FitGlu-Watch-App-Info.plist";
 				"INFOPLIST_FILE[sdk=*]" = "";
 				INFOPLIST_KEY_CFBundleDisplayName = FitGlu;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Это приложение использует данные HealthKit для анализа сердечного ритма и тренировок.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Это приложение использует данные HealthKit для анализа сердечного ритма и тренировок.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "FitGlu writes nothing, only reads.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "FitGlu needs access to your workouts and heart-rate to build daily charts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.aliaksandrrusak.FitGlu;
@@ -602,7 +613,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.01;
 				NEW_SETTING = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.aliaksandrrusak.FitGlu.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -624,15 +635,15 @@
 				CODE_SIGN_ENTITLEMENTS = "FitGlu Watch App/FitGlu Watch App.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"FitGlu Watch App/Preview Content\"";
 				DEVELOPMENT_TEAM = G63BL4UP5A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "FitGlu-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = FitGlu;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Это приложение использует данные HealthKit для анализа сердечного ритма и тренировок.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Это приложение использует данные HealthKit для анализа сердечного ритма и тренировок.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "FitGlu writes nothing, only reads.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "FitGlu needs access to your workouts and heart-rate to build daily charts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.aliaksandrrusak.FitGlu;
@@ -640,7 +651,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.01;
 				NEW_SETTING = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.aliaksandrrusak.FitGlu.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -662,7 +673,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = FitGlu/FitGlu.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"FitGlu/Preview Content\"";
 				DEVELOPMENT_TEAM = G63BL4UP5A;
 				ENABLE_PREVIEWS = YES;
@@ -677,12 +688,12 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.01;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aliaksandrrusak.FitGlu;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -699,7 +710,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = FitGlu/FitGlu.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"FitGlu/Preview Content\"";
 				DEVELOPMENT_TEAM = G63BL4UP5A;
 				ENABLE_PREVIEWS = YES;
@@ -714,12 +725,12 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.01;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aliaksandrrusak.FitGlu;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;

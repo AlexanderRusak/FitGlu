@@ -3,6 +3,7 @@ import SwiftUI
 struct AllGlucoseScreen: View {
     @State private var trainingData: (training: TrainingRow?, heartRates: [HeartRateLogRow], glucoseValues: [GlucoseRow])?
     @State private var selectedTrainingID: Int64 = 1
+    @State private var showMockTrainingSettings: Bool = false  // состояние для показа мокера
 
     var body: some View {
         VStack(spacing: 20) {
@@ -19,7 +20,6 @@ struct AllGlucoseScreen: View {
 
             Button("Load Training Data") {
                 let trainingRes = TrainingLogDBManager.shared.getTrainingWithHeartRates(trainingID: selectedTrainingID)
-
                 if let training = trainingRes.training {
                     let start = training.startTime
                     let end = training.endTime
@@ -27,10 +27,16 @@ struct AllGlucoseScreen: View {
                     print("\u{1F3CB}\u{FE0F} Selected Training ID=\(training.id)")
                     print("\u{25B6}\u{FE0F} Start: \(formatDate(start))")
                     print("\u{23F9}\u{FE0F} End:   \(formatDate(end))")
+                    
+                    // Выводим пульсовые данные
+                    print("\u{1F4AA} Loaded \(trainingRes.heartRates.count) heart rate entries")
+                    for hr in trainingRes.heartRates {
+                        let hrTimeStr = formatDate(hr.timestamp)
+                        print("\u{1F4AA} Heart Rate=\(hr.heartRate), Time=\(hrTimeStr)")
+                    }
 
                     let glucose = GlucoseLogDBManager.shared.getGlucoseInRange(start: start, end: end)
                     print("\u{1F522} Loaded \(glucose.count) glucose entries")
-
                     for g in glucose {
                         let timeStr = formatDate(g.timestamp)
                         let offsetStart = g.timestamp - start
@@ -58,7 +64,26 @@ struct AllGlucoseScreen: View {
                     print("\u{1F3CB}\u{FE0F} Training ID=\(t.id), Type=\(t.type), Start=\(Date(timeIntervalSince1970: t.startTime)), End=\(Date(timeIntervalSince1970: t.endTime))")
                 }
             }
+            
+            Divider()
+                .padding(.vertical)
+            
+            // Кнопка для запуска мок тренировки
+            Button("Запустить мок тренировку") {
+                showMockTrainingSettings.toggle()
+            }
+            .sheet(isPresented: $showMockTrainingSettings) {
+                MockTrainingSettingsView()
+            }
         }
         .padding()
     }
+}
+
+private func formatDate(_ timestamp: Double) -> String {
+    let date = Date(timeIntervalSince1970: timestamp)
+    let f = DateFormatter()
+    f.dateStyle = .short          // «28.04.24»
+    f.timeStyle = .medium         // «14:37:05»
+    return f.string(from: date)
 }

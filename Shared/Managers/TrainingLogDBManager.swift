@@ -172,36 +172,68 @@ public class TrainingLogDBManager {
         return results
     }
     
-    public func getTrainingWithHeartRates(trainingID: Int64) -> (training: TrainingRow?, heartRates: [HeartRateLogRow]) {
+    public func getTrainingWithHeartRates(trainingID: Int64)
+          -> (training: TrainingRow?, heartRates: [HeartRateLogRow])
+    {
+        // 1. Тренировка
         var training: TrainingRow?
-        var heartRates: [HeartRateLogRow] = []
-        
-        // Запрос тренировки
-        let queryTraining = tableTrainingLog.filter(colID == trainingID)
         do {
-            if let row = try db.pluck(queryTraining) {
-                let idVal = try row.get(colID)
-                let typeVal = try row.get(colType)
-                let startVal = try row.get(colStartDate)
-                let endVal = try row.get(colEndDate) ?? 0
-
+            let rowQ = tableTrainingLog.filter(colID == trainingID)
+            if let row = try db.pluck(rowQ) {
                 training = TrainingRow(
-                    id: idVal,
-                    type: typeVal,
-                    startTime: startVal,
-                    endTime: endVal
+                    id:         try row.get(colID),
+                    type:       try row.get(colType),
+                    startTime:  try row.get(colStartDate),
+                    endTime:    try row.get(colEndDate) ?? 0
                 )
             }
         } catch {
-            print("❌ getTrainingWithHeartRates error (training): \(error)")
+            print("❌ getTrainingWithHeartRates (training):", error)
         }
+
+        // 2. Сырые HR → адаптер → «плоские» HR
+        let raw   = HeartRateLogDBManager.shared.getHeartRates(for: trainingID)
         
-        // Запрос пульсовых данных
-        let queryHeartRates = HeartRateLogDBManager.shared.getHeartRates(for: trainingID)
-        heartRates = queryHeartRates
-        
-        return (training, heartRates)
+        return (training, raw)
     }
+
+    
+    public func insertTraining(training: TrainingRow,
+                               completion: @escaping (Bool, TrainingRow?) -> Void)
+    {
+        do {
+            // Подготовим INSERT-запрос
+            // Если endTime == 0, то считаем, что тренировка пока «открытая» и пишем nil.
+            // Если endTime > 0, значит пользователь задал время окончания, и мы запишем его в базу.
+            let endDateValue: Double? = (training.endTime == 0) ? nil : training.endTime
+            
+            let insert = tableTrainingLog.insert(
+                colType <- training.type,
+                colStartDate <- training.startTime,
+                colEndDate <- endDateValue,
+                colIsSynced <- false
+            )
+            
+            // Выполним вставку
+            let rowID = try db.run(insert)
+            print("TrainingLogDBManager: Inserted training id=\(rowID) (type=\(training.type))")
+            
+            // Формируем объект с актуальным ID (присвоенным базой)
+            let insertedTraining = TrainingRow(
+                id: rowID,
+                type: training.type,
+                startTime: training.startTime,
+                endTime: training.endTime
+            )
+            
+            // Возвращаем успех и вставленный объект
+            completion(true, insertedTraining)
+        } catch {
+            print("insertTraining error: \(error)")
+            completion(false, nil)
+        }
+    }
+
     
     // MARK: - Sync Logic (только watchOS)
 #if os(watchOS)

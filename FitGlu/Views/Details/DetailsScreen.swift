@@ -29,11 +29,13 @@ struct DetailsScreen: View {
                         .padding()
                 } else {
                     GlucoseHeartRateChartView(
-                        glucoseData:   vm.glucose,
-                        heartRateData: vm.heartRates,
-                        hrDailyPoints: vm.hrDailyPoints,
-                        trainings:     vm.trainings,
-                        domain:        selectedDate.startOfDay ... selectedDate.endOfDay
+                        glucose:        vm.glucose,
+                        heartRateRaw:   vm.heartRates,
+                        hrDailyPoints:  vm.hrDailyPoints,
+                        trainings:      vm.trainings,
+                        dayDomain:      selectedDate.startOfDay ... selectedDate.endOfDay,
+                        userAge:     vm.userAge,          // new
+                        userSex:     vm.userSex           // new
                     )
                 }
                 Spacer(minLength: 0)

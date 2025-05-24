@@ -16,6 +16,11 @@ final class DetailsViewModel: ObservableObject {
     private let hk    = HealthKitWorkoutProvider()     // HealthKit
 
     private var bag = Set<AnyCancellable>()
+    
+    @Published var userAge : Int?               // ← новое
+    @Published var userSex : HKBiologicalSex?   // ← новое
+
+    private let auth = HealthKitAuthorizationManager()
 
     // MARK: – Public API
     @MainActor
@@ -49,6 +54,18 @@ final class DetailsViewModel: ObservableObject {
         heartRates    = locHR + converted.heartRates
         glucose       = locG
         hrDailyPoints = points
+        
+        if userAge == nil {
+            await withCheckedContinuation { cont in
+                auth.fetchAge { age in
+                    self.userAge = age
+                    self.auth.fetchBiologicalSex { sex in
+                        self.userSex = sex
+                        cont.resume()
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -15,6 +15,14 @@ extension Date {
         return dayEnd
     }
     
+    static func + (lhs: Date, rhs: TimeInterval) -> Date {
+        lhs.addingTimeInterval(rhs)
+    }
+    /// date − секунды
+    static func - (lhs: Date, rhs: TimeInterval) -> Date {
+        lhs.addingTimeInterval(-rhs)
+    }
+    
 }
 
 enum DateUtils {

@@ -8,14 +8,14 @@ struct GlucoseHeartRateChartView: View {
     private let cfg = ChartConfig.default
 
     // MARK: - In-data
-    let glucose             : [GlucoseRow]
-    let heartRateRaw        : [HeartRateLogRow]
-    let hrDailyPoints       : [HRPoint]
-    let trainings           : [TrainingRow]
-    let dayDomain           : ClosedRange<Date>
-    let userAge: Int?
-    let userSex: HKBiologicalSex?
-
+    let glucose      : [GlucoseRow]
+        let heartRateRaw : [HeartRateLogRow]   // остаётся — нужен для yMax
+        let hrSegments   : [[HRPoint]]         // ← наши куски без дыр
+        let trainings    : [TrainingRow]
+        let dayDomain    : ClosedRange<Date>
+        let userAge      : Int?
+        let userSex      : HKBiologicalSex?
+    
     // MARK: - Local state (минимум: только то, что нужно здесь)
     @State private var scale:  CGFloat = 1
     @State private var offset: TimeInterval = 0
@@ -39,22 +39,50 @@ struct GlucoseHeartRateChartView: View {
                 .font(.subheadline).foregroundColor(.gray)
 
             Chart {
+                // 0) пульсовые зоны (их можно оставить на левой оси – они
+                //    просто фон, поэтому .yAxis(.left) не нужен)
                 if let age = userAge {
-                    ChartHRZones(
-                        zones: HRZoneProvider.ranges(for: age, sex: userSex),
-                        xDomain: domain
-                    )
+                    ChartHRZones(zones: HRZoneProvider.ranges(for: age, sex: userSex),
+                                 xDomain: domain)
                 }
+
+                // 1) фон (тренировки)
                 TrainingBackground(trainings: trainings, yMax: yMax)
+
+                // 2) глюкоза
                 GlucoseSeries(data: glucose)
-                HeartRateSeries(data: hrDailyPoints,
-                                showAsLine: showHRLine)
+
+                // 3) пульс
+                HeartRateSeries(segments: hrSegments,
+                                        asLine: showHRLine,
+                                        useRightY: showHRLine)
             }
-            .denseAxes(
-                majorX: .hour, majorXStep: 1,
-                minorX: .minute, minorXStep: 10,
-                yStep: 5
-            )
+            .chartYAxis {
+                // ─── левая (глюкоза) ─────────────────────────────
+                AxisMarks(position: .leading, values: .automatic) { value in
+                    AxisGridLine()
+                    AxisTick()
+
+                    if let d = value.as(Double.self) {
+                        AxisValueLabel {                // 👈 label lives inside
+                            Text("\(Int(d))")           // mg/dL
+                        }
+                    }
+                }
+
+                // ─── правая (пульс) ──────────────────────────────
+                AxisMarks(position: .trailing, values: .automatic) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.4, dash: [4, 4]))
+                        .foregroundStyle(.blue.opacity(0.25))
+                    AxisTick()
+
+                    if let d = value.as(Double.self) {
+                        AxisValueLabel {
+                            Text("\(Int(d))")           // bpm
+                        }
+                    }
+                }
+            }
             .chartXScale(domain: domain)
             .chartYScale(domain: 0...yMax)
             .chartOverlay { proxy in

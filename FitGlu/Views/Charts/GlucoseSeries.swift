@@ -5,13 +5,18 @@ struct GlucoseSeries: ChartContent {
     let data: [GlucoseRow]
 
     var body: some ChartContent {
-        ForEach(data, id: \.id) { g in
+        ForEach(
+            data.sorted { $0.timestamp < $1.timestamp },
+            id: \.id                     // ← уникальный идентификатор
+        ) { g in
             LineMark(
-                x: .value("Time", Date(timeIntervalSince1970: g.timestamp)),
-                y: .value("Glucose", g.glucoseValue)
+                x: .value("t", Date(timeIntervalSince1970: g.timestamp)),
+                y: .value("G", g.glucoseValue)
             )
             .interpolationMethod(.catmullRom)
             .foregroundStyle(.red)
+            .lineStyle(.init(lineWidth: 1.3))        // ← левая шкала
         }
     }
 }
+

@@ -30,12 +30,12 @@ struct DetailsScreen: View {
                 } else {
                     GlucoseHeartRateChartView(
                         glucose:        vm.glucose,
-                        heartRateRaw:   vm.heartRates,
-                        hrDailyPoints:  vm.hrDailyPoints,
+                        heartRateRaw:   vm.heartRates,       // если нужно
+                        hrSegments:     vm.hrSegments,       // ← новое
                         trainings:      vm.trainings,
                         dayDomain:      selectedDate.startOfDay ... selectedDate.endOfDay,
-                        userAge:     vm.userAge,          // new
-                        userSex:     vm.userSex           // new
+                        userAge:        vm.userAge,
+                        userSex:        vm.userSex
                     )
                 }
                 Spacer(minLength: 0)

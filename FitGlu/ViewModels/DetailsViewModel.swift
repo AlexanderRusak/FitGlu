@@ -10,6 +10,7 @@ final class DetailsViewModel: ObservableObject {
     @Published var heartRates    : [HeartRateLogRow] = []
     @Published var glucose       : [GlucoseRow]      = []
     @Published var hrDailyPoints : [HRPoint]         = []
+    @Published var hrSegments: [[HRPoint]] = []   // ← новая published-переменная
 
     // MARK: – Providers
     private let local = LocalDBProvider()              // SQLite
@@ -38,8 +39,22 @@ final class DetailsViewModel: ObservableObject {
         let bundles   = (try? await hk.bundles(in: from ... to)) ?? []
         let hkRaw     = (try? await hk.dailyHeartRates(in: from ... to)) ?? []
 
-        // фильтруем суточные HR‑сэмплы
-        let adapter       = HRFlatAdapter()
+        // внутри load(for:)
+        let adapter       = HRFlatAdapter(maxGap: 5 * 60)
+        let hkSegments    = adapter.chunks(from: hkRaw)          // [[HKQuantitySample]]
+
+        let hrSegments: [[HRPoint]] = hkSegments.map { seg in
+            seg.map { s in
+                HRPoint(
+                    time: s.startDate,
+                    bpm:  Int(s.quantity.doubleValue(
+                                for: .count().unitDivided(by: .minute()))),
+                    inWorkout: false          // или вычислите сами
+                )
+            }
+        }
+
+        self.hrSegments = hrSegments          // ← публикуем для графика
         let hkClean       = adapter.convert(hkRaw)
         print("📈 HR daily: raw=\(hkRaw.count)   clean=\(hkClean.count)")
 

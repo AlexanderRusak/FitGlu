@@ -9,8 +9,7 @@ enum TrainingPalette {
         case "Cycling":                         .yellow
         case "Functional Strength Training":    .orange
         case "Traditional Strength Training":   .indigo
-        case "Fat Burning":                     .red
-        case "Cardio":                          .pink
+        case "HIIT":                            .red
         default:                                .gray
         }
     }

@@ -9,6 +9,7 @@ extension HKWorkoutActivityType {
         case .cycling:                      "Cycling"
         case .functionalStrengthTraining:   "Functional Strength Training"
         case .traditionalStrengthTraining:  "Traditional Strength Training"
+        case .highIntensityIntervalTraining: "HIIT"
         // …добавляйте по мере необходимости…
         default:                            "Other"
         }

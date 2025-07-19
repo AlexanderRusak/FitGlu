@@ -81,6 +81,13 @@
 			);
 			target = 708E054E2CF352A400489532 /* FitGlu */;
 		};
+		70A5CB532E2BB94A00A3E174 /* Exceptions for "FitGlu" folder in "FitGlu Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Analize/SessionAnalyzer.swift,
+			);
+			target = 708E05742CF352A500489532 /* FitGlu Watch App */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -96,6 +103,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				70A43A622D909D5B00C3514B /* Exceptions for "FitGlu" folder in "FitGlu" target */,
+				70A5CB532E2BB94A00A3E174 /* Exceptions for "FitGlu" folder in "FitGlu Watch App" target */,
 			);
 			path = FitGlu;
 			sourceTree = "<group>";

@@ -92,7 +92,11 @@ struct AllGlucoseScreen: View {
         }
         .padding()
         .task(id: selectedDate) {
-                    await vm.load(for: selectedDate)
+            do {
+                try await vm.load(for: selectedDate)
+            } catch {
+                print("❌ Ошибка при загрузке данных за \(selectedDate):", error)
+            }
         }
     }
 }

@@ -82,6 +82,73 @@ final class DetailsViewModel: ObservableObject {
             }
         }
     }
+    
+    @MainActor
+    func analyzeAndSaveAll() async throws -> Int {
+        var newCount = 0
+        let calendar = Calendar.current
+        let df = DateFormatter(); df.dateStyle = .short; df.timeStyle = .none
+
+        // 1) Дни локальных тренировок
+        let localTrainings = local.trainings(from: .distantPast, to: .distantFuture)
+        let localDays = Set(localTrainings.map {
+            Date(timeIntervalSince1970: $0.startTime).startOfDay
+        })
+
+        // 2) Дни тренировок из HealthKit
+        let hkBundles = try await hk.bundles(in: .distantPast ... .distantFuture)
+        let hkDays = Set(hkBundles.map {
+            calendar.startOfDay(for: $0.workout.startDate)
+        })
+
+        // 3) Объединяем и сортируем
+        let daysToAnalyze = Array(localDays.union(hkDays)).sorted()
+        print("📆 Дней для анализа: \(daysToAnalyze.map { df.string(from: $0) })")
+
+        // 4) По каждому дню: load → анализ → сохранение новых
+        for day in daysToAnalyze {
+            let dayStr = df.string(from: day)
+            print("\n—— День \(dayStr) ——")
+
+            // Загрузили в self.trainings, self.glucose и self.hrSegments
+            try await load(for: day)
+
+            // Пропускаем, если нет ни одного из трёх наборов данных
+            guard !trainings.isEmpty, !glucose.isEmpty, !hrSegments.isEmpty else {
+                print("⚠️ Пропущено: недостаточно данных (trainings=\(trainings.count), glucose=\(glucose.count), hrSeg=\(hrSegments.count))")
+                continue
+            }
+            print("   ▶ trainings=\(trainings.count), glucose=\(glucose.count), hrSeg=\(hrSegments.count)")
+
+            // Анализируем сессии
+            let sessions = SessionAnalyzer.makeSessions(
+                hrSegments: hrSegments,
+                glucose:    glucose,
+                trainings:  trainings
+            )
+            print("   ▶ SessionAnalyzer вернул: \(sessions.count) сессии(й)")
+
+            // Сохраняем только новые
+            let db = SessionZonesDBManager.shared
+            for session in sessions {
+                if try !db.exists(start: session.start) {
+                    try db.save(session: session)
+                    newCount += 1
+                    print("     ✅ Сохранена новая сессия (start=\(df.string(from: Date(timeIntervalSince1970: session.start))))")
+                }
+            }
+        }
+
+        // 5) Итог
+        if newCount == 0 {
+            print("\nℹ️ Новых сессий не добавлено.")
+        } else {
+            print("\n🎉 Всего добавлено новых сессий: \(newCount)")
+        }
+        return newCount
+    }
+
+
 }
 
 // MARK: – Helpers

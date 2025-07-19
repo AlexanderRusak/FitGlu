@@ -113,6 +113,38 @@ public class HeartRateLogDBManager {
         }
     }
     
+
+    public func getHeartRatesInRange(start: Date,
+                                     end:   Date) -> [HeartRateLogRow] {
+
+        let startTS = start.timeIntervalSince1970
+        let endTS   = end.timeIntervalSince1970
+
+        let query = tableHeartRateLog
+            .filter(colTimestamp >= startTS && colTimestamp <= endTS)
+            .order(colTimestamp.asc)
+
+        var results: [HeartRateLogRow] = []
+        do {
+            for row in try db.prepare(query) {
+                results.append(
+                    HeartRateLogRow(
+                        id:         try row.get(colID),
+                        trainingID: try row.get(colTrainingID),
+                        heartRate:  try row.get(colHeartRate),
+                        timestamp:  try row.get(colTimestamp),
+                        isSynced:   try row.get(colIsSynced)
+                    )
+                )
+            }
+        } catch {
+            print("❌ getHeartRatesInRange error: \(error)")
+        }
+        return results
+    }
+
+    
+    
     public func getHeartRates(for trainingID: Int64) -> [HeartRateLogRow] {
         var results: [HeartRateLogRow] = []
         let query = tableHeartRateLog.filter(colTrainingID == trainingID)

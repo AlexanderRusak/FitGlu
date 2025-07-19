@@ -4,7 +4,11 @@ struct AllGlucoseScreen: View {
     @State private var trainingData: (training: TrainingRow?, heartRates: [HeartRateLogRow], glucoseValues: [GlucoseRow])?
     @State private var selectedTrainingID: Int64 = 1
     @State private var showMockTrainingSettings: Bool = false  // состояние для показа мокера
-
+    @State private var selectedDate = Date()
+    @State private var showDatePicker = false
+    
+    @StateObject private var vm = DetailsViewModel();
+    
     var body: some View {
         VStack(spacing: 20) {
             Text("All Glucose Screen")
@@ -17,6 +21,7 @@ struct AllGlucoseScreen: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .frame(width: 80)
             }
+            
 
             Button("Load Training Data") {
                 let trainingRes = TrainingLogDBManager.shared.getTrainingWithHeartRates(trainingID: selectedTrainingID)
@@ -64,6 +69,15 @@ struct AllGlucoseScreen: View {
                     print("\u{1F3CB}\u{FE0F} Training ID=\(t.id), Type=\(t.type), Start=\(Date(timeIntervalSince1970: t.startTime)), End=\(Date(timeIntervalSince1970: t.endTime))")
                 }
             }
+            DateHeaderView(date: $selectedDate,
+                           showPicker:  $showDatePicker)
+            Button("Анализировать HR-CGM") {
+                let sessions = SessionAnalyzer
+                    .makeSessions(hrSegments: vm.hrSegments,
+                                  glucose: vm.glucose,
+                                  trainings: vm.trainings)
+                print("📊 sessions =", sessions.count)
+            }
             
             Divider()
                 .padding(.vertical)
@@ -77,6 +91,9 @@ struct AllGlucoseScreen: View {
             }
         }
         .padding()
+        .task(id: selectedDate) {
+                    await vm.load(for: selectedDate)
+        }
     }
 }
 

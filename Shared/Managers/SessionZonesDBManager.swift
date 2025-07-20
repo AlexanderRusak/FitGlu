@@ -110,4 +110,8 @@ public final class SessionZonesDBManager {
     public func count() throws -> Int {
         try db.scalar(tableSessionZones.count)
     }
+    
+    public func clearAll() throws {
+        try db.run(tableSessionZones.delete())
+    }
 }

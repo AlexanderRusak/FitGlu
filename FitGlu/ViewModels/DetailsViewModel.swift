@@ -89,31 +89,46 @@ final class DetailsViewModel: ObservableObject {
         let calendar = Calendar.current
         let df = DateFormatter(); df.dateStyle = .short; df.timeStyle = .none
 
-        // 1) Дни локальных тренировок
+        // Определяем «вчерашний» день для отчёта
+        let today = calendar.startOfDay(for: Date())
+        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today) else {
+            return 0
+        }
+
+        // Читаем дату последнего обновления из базы
+        let lastUpdateDate = TrainingsStateDBManager.shared.getLastUpdateDate()
+        
+        // 1) Получаем дни локальных тренировок
         let localTrainings = local.trainings(from: .distantPast, to: .distantFuture)
         let localDays = Set(localTrainings.map {
             Date(timeIntervalSince1970: $0.startTime).startOfDay
         })
 
-        // 2) Дни тренировок из HealthKit
+        // 2) Получаем дни тренировок из HealthKit
         let hkBundles = try await hk.bundles(in: .distantPast ... .distantFuture)
         let hkDays = Set(hkBundles.map {
             calendar.startOfDay(for: $0.workout.startDate)
         })
 
-        // 3) Объединяем и сортируем
-        let daysToAnalyze = Array(localDays.union(hkDays)).sorted()
+        // 3) Объединяем, сортируем и фильтруем по дате
+        var daysToAnalyze = Array(localDays.union(hkDays)).sorted()
+        // Пропускаем дни до и включая lastUpdateDate
+        if let last = lastUpdateDate {
+            daysToAnalyze = daysToAnalyze.filter { $0 > last }
+        }
+        // Анализируем не позже «вчера»
+        daysToAnalyze = daysToAnalyze.filter { $0 <= yesterday }
         print("📆 Дней для анализа: \(daysToAnalyze.map { df.string(from: $0) })")
 
-        // 4) По каждому дню: load → анализ → сохранение новых
+        // 4) По каждому дню: загрузка данных → анализ → сохранение новых сессий
         for day in daysToAnalyze {
             let dayStr = df.string(from: day)
             print("\n—— День \(dayStr) ——")
 
-            // Загрузили в self.trainings, self.glucose и self.hrSegments
+            // Загружаем данные (self.trainings, self.glucose, self.hrSegments)
             try await load(for: day)
 
-            // Пропускаем, если нет ни одного из трёх наборов данных
+            // Проверяем, есть ли все три набора данных
             guard !trainings.isEmpty, !glucose.isEmpty, !hrSegments.isEmpty else {
                 print("⚠️ Пропущено: недостаточно данных (trainings=\(trainings.count), glucose=\(glucose.count), hrSeg=\(hrSegments.count))")
                 continue
@@ -128,18 +143,23 @@ final class DetailsViewModel: ObservableObject {
             )
             print("   ▶ SessionAnalyzer вернул: \(sessions.count) сессии(й)")
 
-            // Сохраняем только новые
+            // Сохраняем только новые сессии
             let db = SessionZonesDBManager.shared
             for session in sessions {
                 if try !db.exists(start: session.start) {
                     try db.save(session: session)
+                    try AverageZonesDBManager.shared.upsertAverage(newZones: session.zones)
                     newCount += 1
-                    print("     ✅ Сохранена новая сессия (start=\(df.string(from: Date(timeIntervalSince1970: session.start))))")
+                    let sessionDate = df.string(from: Date(timeIntervalSince1970: session.start))
+                    print("     ✅ Сохранена новая сессия (start=\(sessionDate))")
                 }
             }
         }
 
-        // 5) Итог
+        // 5) Обновляем дату последнего обновления на вчерашнюю
+        TrainingsStateDBManager.shared.saveLastUpdateDate(yesterday)
+        
+        // Итог
         if newCount == 0 {
             print("\nℹ️ Новых сессий не добавлено.")
         } else {
@@ -147,8 +167,6 @@ final class DetailsViewModel: ObservableObject {
         }
         return newCount
     }
-
-
 }
 
 // MARK: – Helpers

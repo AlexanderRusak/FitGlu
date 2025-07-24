@@ -27,6 +27,7 @@ public final class SessionZonesDBManager {
     private let z4High   = SQLite.Expression<Int>("z4_high")
     private let z5Low    = SQLite.Expression<Int>("z5_low")
     private let z5High   = SQLite.Expression<Int>("z5_high")
+    private let types = SQLite.Expression<String>("types")
 
     private init() {
         do {
@@ -87,6 +88,7 @@ public final class SessionZonesDBManager {
     public func fetchAll() throws -> [SessionDTO] {
         var result = [SessionDTO]()
         for row in try db.prepare(tableSessionZones.order(start.asc)) {
+            let types = try decodeTypes(row[types])
             let zones = ZoneThresholds(
                 z1: [row[z1Low],  row[z1High]],
                 z2: [row[z2Low],  row[z2High]],
@@ -100,6 +102,7 @@ public final class SessionZonesDBManager {
                 workouts: [],    // в БД храним только зоны, сами WorkoutChunk нет необходимости сюда складывать
                 lag:      0,     // при желании можно добавить колонку lag и сохранять её
                 zones:    zones
+
             )
             result.append(dto)
         }
@@ -113,5 +116,15 @@ public final class SessionZonesDBManager {
     
     public func clearAll() throws {
         try db.run(tableSessionZones.delete())
+    }
+    
+    private func encodeTypes(_ types: [String]) throws -> String {
+        let data = try JSONEncoder().encode(types)
+        return String(data: data, encoding: .utf8) ?? "[]"
+    }
+
+    private func decodeTypes(_ str: String) throws -> [String] {
+        guard let data = str.data(using: .utf8) else { return [] }
+        return try JSONDecoder().decode([String].self, from: data)
     }
 }

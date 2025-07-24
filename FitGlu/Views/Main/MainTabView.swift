@@ -8,6 +8,11 @@ struct MainTabView: View {
                     Label("Trainings", systemImage: "figure.walk")
                 }
 
+            ActivityScreen()
+                .tabItem {
+                    Label("Activity", systemImage: "activity.bar")
+                }
+            
             DetailsScreen()
                 .tabItem {
                     Label("Details", systemImage: "chart.bar")

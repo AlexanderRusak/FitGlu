@@ -13,4 +13,9 @@ class TrainingsStateDBManager {
     func saveLastUpdateDate(_ date: Date) {
         UserDefaults.standard.set(date, forKey: key)
     }
+    
+    // Очистка (удаление даты из UserDefaults)
+    public func clearAll() {
+        UserDefaults.standard.removeObject(forKey: key)
+    }
 }

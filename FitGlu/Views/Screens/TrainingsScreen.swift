@@ -41,7 +41,8 @@ struct TrainingsScreen: View {
                     do {
                         try SessionZonesDBManager.shared.clearAll()
                         try AverageZonesDBManager.shared.clearAll()
-                        statusMessage = "🗑️ Обе таблицы очищены"
+                        TrainingsStateDBManager.shared.clearAll() // ✅ теперь без try
+                        statusMessage = "🗑️ Все очищено"
                     } catch {
                         statusMessage = "❌ Ошибка очистки: \(error.localizedDescription)"
                     }

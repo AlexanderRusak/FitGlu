@@ -26,8 +26,6 @@ public final class AverageZonesDBManager {
 
     private init() {
         do {
-            // Удаляем старую таблицу, чтобы пересоздать со всеми полями
-            try db.run("DROP TABLE IF EXISTS average_zones")
             try db.run(table.create(ifNotExists: true) { t in
                 t.column(id,     primaryKey: .autoincrement)
                 t.column(count)

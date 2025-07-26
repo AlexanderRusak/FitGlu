@@ -27,7 +27,7 @@ public final class SessionZonesDBManager {
     private let z4High   = SQLite.Expression<Int>("z4_high")
     private let z5Low    = SQLite.Expression<Int>("z5_low")
     private let z5High   = SQLite.Expression<Int>("z5_high")
-    private let types = SQLite.Expression<String>("types")
+    private let type = SQLite.Expression<String>("type")
 
     private init() {
         do {
@@ -88,7 +88,6 @@ public final class SessionZonesDBManager {
     public func fetchAll() throws -> [SessionDTO] {
         var result = [SessionDTO]()
         for row in try db.prepare(tableSessionZones.order(start.asc)) {
-            let types = try decodeTypes(row[types])
             let zones = ZoneThresholds(
                 z1: [row[z1Low],  row[z1High]],
                 z2: [row[z2Low],  row[z2High]],

@@ -3,6 +3,7 @@ import SwiftUI
 struct ActivityScreen: View {
     @State private var selectedDate = Date()
     @State private var showPicker    = false
+    @State private var showHRLine = false
     @StateObject private var detailsVM = DetailsViewModel()
     @StateObject private var chartVM   = ActivityChartViewModel()
 
@@ -30,6 +31,8 @@ struct ActivityScreen: View {
             } else {
                 ActivityChartFullView(vm: chartVM)
                     .frame(height: 320)
+                ActivityChartLegend(trainings: detailsVM.trainings, hasGlucose: !chartVM.glucosePoints.isEmpty)
+                    .padding(.horizontal)
             }
         }
         .padding()

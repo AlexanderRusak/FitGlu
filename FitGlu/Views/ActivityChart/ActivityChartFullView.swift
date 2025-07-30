@@ -5,7 +5,7 @@ import Charts
 struct ActivityChartFullView: View {
     @ObservedObject var vm: ActivityChartViewModel
 
-    // MARK: - Подготовка интервалов тренировок
+    // MARK: - Интервалы тренировок
     private var workoutRanges: [ClosedRange<Date>] {
         vm.trainings.map { tr in
             let s = Date(timeIntervalSince1970: tr.startTime)
@@ -14,13 +14,11 @@ struct ActivityChartFullView: View {
         }
     }
     private func inWorkouts(_ t: Date) -> Bool {
-        for r in workoutRanges {
-            if r.contains(t) { return true }
-        }
+        for r in workoutRanges where r.contains(t) { return true }
         return false
     }
 
-    // MARK: - Активные точки только внутри тренировок
+    // Точки только внутри тренировок
     private var hrActive: [HeartRateChartPoint] {
         vm.hrPoints.filter { inWorkouts($0.time) }
     }
@@ -28,46 +26,36 @@ struct ActivityChartFullView: View {
         vm.glucosePoints.filter { inWorkouts($0.time) }
     }
 
-    // MARK: - Диапазон X: от первой до последней тренировки (с запасом)
+    // MARK: - Диапазон X = от первой до последней тренировки (+10 мин паддинг)
     private var xDomain: ClosedRange<Date>? {
         guard let start = workoutRanges.map(\.lowerBound).min(),
               let end   = workoutRanges.map(\.upperBound).max()
         else { return nil }
-
-        let pad: TimeInterval = 10 * 60 // 10 минут
+        let pad: TimeInterval = 10 * 60
         return (start.addingTimeInterval(-pad))...(end.addingTimeInterval(pad))
     }
 
-    // MARK: - Диапазон Y без «чёрного дна»
+    // MARK: - Диапазон Y по правилам: min(zoneLow, hrMin, gluMin) ... max(zoneHigh, hrMax, gluMax)
     private var yDomain: ClosedRange<Double> {
-        // нижняя/верхняя по зонам
-        let zoneLow  = vm.zones.map(\.range.lowerBound).min().map(Double.init)
-        let zoneHigh = vm.zones.map(\.range.upperBound).max().map(Double.init)
+        // зоны
+        let zoneLowMin  = vm.zones.map(\.range.lowerBound).min().map(Double.init)
+        let zoneHighMax = vm.zones.map(\.range.upperBound).max().map(Double.init)
 
-        // минимально/максимальные значения по данным ВНУТРИ тренировок
+        // данные (внутри тренировок)
         let hrMin = hrActive.map(\.bpm).min().map(Double.init)
         let hrMax = hrActive.map(\.bpm).max().map(Double.init)
         let gMin  = gluActive.map(\.value).min()
         let gMax  = gluActive.map(\.value).max()
 
-        // Нижняя граница:
-        // 1) минимум данных внутри тренировок (если есть)
-        let dataMin = [hrMin, gMin].compactMap { $0 }.min()
-        // 2) не опускаться ниже нижней границы зон
-        var lower = dataMin ?? zoneLow ?? 0
-        if let zLow = zoneLow { lower = max(lower, zLow) }
+        let lower = [zoneLowMin, hrMin, gMin].compactMap { $0 }.min() ?? 0
+        var upper = [zoneHighMax, hrMax, gMax].compactMap { $0 }.max() ?? (lower + 1)
 
-        // Верхняя граница — максимум из данных и зон
-        let upperCandidates = [zoneHigh, hrMax, gMax].compactMap { $0 }
-        var upper = upperCandidates.max() ?? (lower + 1)
-
-        // маленькая «подушка», чтобы линии не липли к краю
-        let pad = 2.0
         if upper <= lower { upper = lower + 1 }
+        let pad = 2.0
         return (lower - pad)...(upper + pad)
     }
 
-    // MARK: - Вспомогательные (чтобы зоны растягивать по ширине графика)
+    // Для фона зон, если тренировок нет
     private var earliestTime: Date {
         (vm.hrPoints.map(\.time) + vm.glucosePoints.map(\.time)).min() ?? Date()
     }
@@ -76,11 +64,10 @@ struct ActivityChartFullView: View {
     }
 
     var body: some View {
-        // заранее зафиксируем X‑границы, чтобы избежать «тяжёлых» вычислений внутри Chart
         let xDom = xDomain
 
         Chart {
-            // 1) Фоновые зоны (оставляем все)
+            // 1) Фоновые зоны (всегда рисуем все)
             ForEach(vm.zones) { zone in
                 RectangleMark(
                     xStart: .value("Start", xDom?.lowerBound ?? earliestTime),
@@ -91,29 +78,34 @@ struct ActivityChartFullView: View {
                 .foregroundStyle(zone.color)
             }
 
-            // 2) Пульс — сегменты по тренировкам
+            // 2) Пульс — отдельная серия на каждую тренировку (series = training.id)
             ForEach(vm.trainings, id: \.id) { tr in
                 let s = Date(timeIntervalSince1970: tr.startTime)
                 let e = Date(timeIntervalSince1970: tr.endTime)
                 let color = TrainingPalette.color(for: tr.type)
 
-                let pts = vm.hrPoints.filter { $0.trainingType == tr.type && (s...e).contains($0.time) }
+                let pts = vm.hrPoints
+                    .filter { $0.trainingType == tr.type && (s...e).contains($0.time) }
+                    .sorted { $0.time < $1.time }
+
                 if !pts.isEmpty {
                     ForEach(pts) { pt in
                         LineMark(
                             x: .value("Time", pt.time),
                             y: .value("BPM",  pt.bpm),
-                            series: .value("Segment", tr.type)
+                            // главное: уникальная серия = конкретная сессия
+                            series: .value("Session", "\(tr.id)") // String на случай, если id не Plottable
                         )
-                        .foregroundStyle(color)
+                        .foregroundStyle(color)                  // цвет — по типу
                         .lineStyle(StrokeStyle(lineWidth: 2))
                     }
                 }
             }
 
-            // 3) Глюкоза — пунктир (оставляем как есть; если хочешь — тоже ограничили внутри тренировок выше)
-            if !vm.glucosePoints.isEmpty {
-                ForEach(vm.glucosePoints) { pt in
+            // 3) Глюкоза — пунктир, только внутри тренировок
+            if !gluActive.isEmpty {
+                let sortedGlucose = gluActive.sorted { $0.time < $1.time }
+                ForEach(sortedGlucose) { pt in
                     LineMark(
                         x: .value("Time", pt.time),
                         y: .value("Glucose", pt.value),
@@ -125,22 +117,20 @@ struct ActivityChartFullView: View {
                 .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4]))
             }
         }
-        // Сжимаем X — только активный интервал тренировок (если он есть)
+        // X — только активный интервал (если он есть)
         .ifLet(xDom) { view, dom in
             view.chartXScale(domain: dom)
         }
-        // И сжимаем Y под данные + зоны
+        // Y — по min/max (зоны/пульс/глюкоза)
         .chartYScale(domain: yDomain)
 
-        .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: 6))
-        }
+        .chartXAxis { AxisMarks(values: .automatic(desiredCount: 6)) }
         .frame(height: 300)
         .padding()
     }
 }
 
-// MARK: - Небольшая удобная обёртка для условного модификатора
+// MARK: - Условный модификатор
 private extension View {
     @ViewBuilder
     func ifLet<T>(_ value: T?, transform: (Self, T) -> some View) -> some View {

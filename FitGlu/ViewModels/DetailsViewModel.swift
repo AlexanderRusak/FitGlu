@@ -27,6 +27,7 @@ final class DetailsViewModel: ObservableObject {
     // MARK: – Public API
     @MainActor
     func load(for day: Date) async {
+        let corrected = try? SessionZonesDBManager.shared.correctedGlucose(for: day)
         let from = day.startOfDay
         let to   = day.endOfDay
 
@@ -39,6 +40,15 @@ final class DetailsViewModel: ObservableObject {
 
         let adapter       = HRFlatAdapter(maxGap: 5 * 60)
         let hkSegments    = adapter.chunks(from: hkRaw)
+        #if DEBUG
+        if let c = corrected, !c.isEmpty {
+            print("✅ correctedGlucose used (\(c.count) pts) for",
+                  day.formatted(date: .abbreviated, time: .omitted))
+        } else {
+            print("ℹ️ raw CGM used (\(locG.count) pts) for",
+                  day.formatted(date: .abbreviated, time: .omitted))
+        }
+        #endif
 
         let hrSegments: [[HRPoint]] = hkSegments.map { seg in
             seg.map { s in
@@ -59,7 +69,7 @@ final class DetailsViewModel: ObservableObject {
 
         trainings     = locT  + converted.trainings
         heartRates    = locHR + converted.heartRates
-        glucose       = locG
+        glucose       = corrected ?? locG
         hrDailyPoints = points
 
         if userAge == nil {

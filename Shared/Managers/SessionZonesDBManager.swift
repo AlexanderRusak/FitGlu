@@ -28,9 +28,12 @@ public final class SessionZonesDBManager {
     private let z5Low    = SQLite.Expression<Int>("z5_low")
     private let z5High   = SQLite.Expression<Int>("z5_high")
     private let type = SQLite.Expression<String>("type")
+    private let lagMs       = SQLite.Expression<Double>("lag_ms")
+    private let glucoseJSON = SQLite.Expression<String>("glucose_json")
 
     private init() {
         do {
+          //  try db.run(tableSessionZones.drop(ifExists: true))
             try db.run(tableSessionZones.create(ifNotExists: true) { t in
                 t.column(id,      primaryKey: .autoincrement)
                 t.column(start,   unique: true)
@@ -40,6 +43,7 @@ public final class SessionZonesDBManager {
                 t.column(z3Low);  t.column(z3High)
                 t.column(z4Low);  t.column(z4High)
                 t.column(z5Low);  t.column(z5High)
+                t.column(lagMs);  t.column(glucoseJSON, defaultValue: "[]")
             })
         } catch {
             print("❌ SessionZonesDBManager init error:", error)
@@ -50,7 +54,9 @@ public final class SessionZonesDBManager {
     public func save(session: SessionDTO) throws {
         // проверяем, есть ли уже
         if try exists(start: session.start) { return }
-
+        let gData = try JSONEncoder().encode(session.shiftedGlucosePairs)
+        let gStr  = String(data: gData, encoding: .utf8)!
+        
         let insert = tableSessionZones.insert(
             start  <- session.start,
             end    <- session.end,
@@ -63,7 +69,9 @@ public final class SessionZonesDBManager {
             z4Low  <- session.zones.z4[0],
             z4High <- session.zones.z4[1],
             z5Low  <- session.zones.z5[0],
-            z5High <- session.zones.z5[1]
+            z5High <- session.zones.z5[1],
+            lagMs      <- session.lag,
+            glucoseJSON <- gStr
         )
         try db.run(insert)
     }
@@ -125,5 +133,39 @@ public final class SessionZonesDBManager {
     private func decodeTypes(_ str: String) throws -> [String] {
         guard let data = str.data(using: .utf8) else { return [] }
         return try JSONDecoder().decode([String].self, from: data)
+    }
+}
+
+extension SessionZonesDBManager {
+
+    /// Lag-corrected CGM-ряд для указанного дня, если в БД есть
+    /// хотя бы одна сессия, начинавшаяся в этот день.
+    ///
+    /// - Returns: массив `GlucoseRow` (timestamp + value) **или** `nil`.
+    public func correctedGlucose(for day: Date) throws -> [GlucoseRow]? {
+
+        let dayStart = day.startOfDay.timeIntervalSince1970
+        let dayEnd   = day.endOfDay.timeIntervalSince1970
+
+        // --- первая попавшаяся сессия этого дня ---------------------------
+        let query = tableSessionZones
+            .filter(start >= dayStart && start <= dayEnd)
+            .limit(1)
+
+        guard let row = try db.pluck(query) else { return nil }
+
+        // --- JSON → [GPair] ----------------------------------------------
+        guard
+            let data  = row[glucoseJSON].data(using: String.Encoding.utf8),
+            let pairs = try? JSONDecoder().decode([GPair].self, from: data)
+        else { return nil }
+
+        // --- [GPair] → [GlucoseRow] ---------------------------------------
+        return pairs.map {
+            // ⚠︎ если GlucoseRow НЕ содержит id, уберите «id:»
+            GlucoseRow(id: Int64($0.t),
+                       timestamp: $0.t,
+                       glucoseValue: $0.g)
+        }
     }
 }

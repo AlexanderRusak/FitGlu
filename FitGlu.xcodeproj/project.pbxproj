@@ -85,6 +85,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Analize/SessionAnalyzer.swift,
+				"Analize/SessionDTO+ShiftedGlucose.swift",
 			);
 			target = 708E05742CF352A500489532 /* FitGlu Watch App */;
 		};

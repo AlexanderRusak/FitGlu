@@ -10,13 +10,13 @@ struct MainTabView: View {
 
             ActivityScreen()
                 .tabItem {
-                    Label("Activity", systemImage: "activity.bar")
+                    Label("Activity", systemImage: "chart.bar")
                 }
             
-            DetailsScreen()
+         /*   DetailsScreen()
                 .tabItem {
                     Label("Details", systemImage: "chart.bar")
-                }
+                }*/
 
             AllGlucoseScreen()
                 .tabItem {

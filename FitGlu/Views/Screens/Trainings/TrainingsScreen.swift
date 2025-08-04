@@ -9,6 +9,7 @@ struct TrainingsScreen: View {
     @State private var isLoading        = false
     /// OFF — индивидуальные из БД, ON — «220 − возраст»
     @State private var useStandardZones = false
+    @State private var dayTotals = TimeInZone()
 
     // MARK: – Data
     @StateObject private var detailsVM = DetailsViewModel()
@@ -20,73 +21,82 @@ struct TrainingsScreen: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+
                     headerView
                     if showPicker { datePickerView }
 
                     zoneModeToggle
                     if let t = activeThresholds { ZonesBarView(thresholds: t) }
 
-                    trainingsMetricsView
+                    // ———————————  ЭТОТ кусок заменяет старый вывод карточек ——————————
+                    if isLoading {
+                        ProgressView("Loading…")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 24)
+
+                    } else if qualities.isEmpty {
+                        Text("No trainings for the selected day.")
+                            .foregroundStyle(.secondary)
+
+                    } else {
+
+                        // Средний балл + суммарные минуты
+                        let avg = qualities.map(\.zoneBalanceScore).reduce(0, +)
+                                  / Double(qualities.count)
+
+                        MetricAccordion(
+                            title: "Zone Balance",
+                            summary: { showChips in
+                                ZBSSummary(
+                                    avg: avg,
+                                    totals: dayTotals,
+                                    showChips: showChips
+                                )
+                            },
+                            content: { TrainingQualityList(qualities: qualities) }
+                        )
+                        .environment(\.initialExpanded, false) // кастомный env, см. ниже
+                        .padding(.vertical, 4)
+                    }
                 }
                 .padding()
             }
             .navigationTitle("🏋️ Trainings")
-            .task { await loadData() }          // автозагрузка при первом появлении
+            .task { await loadData() }
         }
     }
 }
 
-// MARK: – UI-подкомпоненты
+// MARK: – UI sub-views
 extension TrainingsScreen {
 
-    /// Заголовок + кнопка «показать/скрыть календарь»
     var headerView: some View {
         HStack {
             Text(selectedDate, format: .dateTime.month(.wide).year())
                 .font(.title3).bold()
             Spacer()
-            Button(showPicker ? "Скрыть календарь" : "Показать календарь") {
+            Button(showPicker ? "Hide calendar" : "Show calendar") {
                 withAnimation { showPicker.toggle() }
             }
         }
     }
 
-    /// Графический DatePicker
     var datePickerView: some View {
-        DatePicker("Выберите дату", selection: $selectedDate, displayedComponents: .date)
+        DatePicker("Pick a date", selection: $selectedDate, displayedComponents: .date)
             .datePickerStyle(.graphical)
             .onChange(of: selectedDate) { _, _ in Task { await loadData() } }
     }
 
-    /// Тумблер «Стандартные зоны»
     var zoneModeToggle: some View {
         Toggle(isOn: $useStandardZones) {
-            Label("Стандартные зоны (220−возраст)", systemImage: "heart.text.square")
+            Label("Standard zones (220 − age)", systemImage: "heart.text.square")
         }
         .toggleStyle(.switch)
         .onChange(of: useStandardZones) { _, _ in Task { await computeQuality() } }
     }
-
-    /// Блок карточек/заглушек
-    var trainingsMetricsView: some View {
-        Group {
-            if isLoading {
-                ProgressView("Загружаем данные…")
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 24)
-            } else if qualities.isEmpty {
-                Text("Нет данных по тренировкам за выбранный день.")
-                    .foregroundStyle(.secondary)
-            } else {
-                VStack(alignment: .leading, spacing: 12) {
-                    ForEach(qualities) { TrainingQualityCard(q: $0) }
-                }
-            }
-        }
-    }
 }
 
-// MARK: – Загрузка / расчёт
+// MARK: – Loading / calculations
 extension TrainingsScreen {
 
     @MainActor
@@ -95,7 +105,7 @@ extension TrainingsScreen {
         isLoading = true
         defer { isLoading = false }
 
-        await detailsVM.load(for: selectedDate)        // подтягиваем тренировки/HR/глюкозу
+        await detailsVM.load(for: selectedDate)   // тренировки / HR / глюкоза
         await computeQuality()
     }
 
@@ -109,9 +119,17 @@ extension TrainingsScreen {
             trainings: detailsVM.trainings,
             hrSegments: detailsVM.hrSegments
         )
+
+        // суммарные зоны за день — для чипов в шапке
+        dayTotals = qualities.reduce(TimeInZone()) { acc, q in
+            var t = acc;  let m = q.tiz
+            t.rec += m.rec; t.fat += m.fat; t.tran += m.tran
+            t.ana += m.ana; t.stress += m.stress; return t
+        }
     }
 
-    /// OFF → индивидуальные из БД, ON → дефолт «220 − возраст»
+
+    /// OFF → индивидуальные из БД, ON → «220 − возраст»
     func currentThresholds() -> ZoneThresholds {
         if useStandardZones {
             return DefaultZonesProvider.estimate(age: detailsVM.userAge ?? 30)

@@ -85,6 +85,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Analize/DailyAnalyzer.swift,
+				Analize/ScoreLevel.swift,
 				Analize/SessionAnalyzer.swift,
 				"Analize/SessionDTO+ShiftedGlucose.swift",
 				Views/ActivityChart/DefaultZonesProvider.swift,

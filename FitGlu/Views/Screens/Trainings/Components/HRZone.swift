@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum HRZone: Int, CaseIterable {
+enum HRZone: Int, CaseIterable, Hashable {
     case z1 = 1, z2, z3, z4, z5
 
     /// Короткая подпись для чипов TIZ

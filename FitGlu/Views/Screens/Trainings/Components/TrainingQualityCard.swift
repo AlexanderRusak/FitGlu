@@ -18,7 +18,6 @@ struct TrainingQualityCard: View {
         }
         .padding(12)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-        .sheet(isPresented: $showInfo) { ScoreInfoSheet() }
     }
 }
 
@@ -41,12 +40,6 @@ private extension TrainingQualityCard {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 4) {
                 Text("Zone Balance Score")
-
-                // Info-кнопка
-                Button { showInfo = true } label: {
-                    Image(systemName: "info.circle").font(.caption)
-                }
-                .buttonStyle(.plain)
 
                 Spacer()
                 Text("\(Int(round(q.zoneBalanceScore))) / 100")
@@ -79,31 +72,6 @@ private extension TrainingQualityCard {
                 }
             }
             .padding(.vertical, 2)
-        }
-    }
-}
-
-// MARK: – Info-sheet
-private struct ScoreInfoSheet: View {
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("""
-                         **Zone Balance Score** показывает, \
-                         какую долю тренировки вы провели в «полезных» зонах.
-
-                         * Easy < 25   — слишком лёгко  
-                         * Fair 25-49 — нормальная лёгкая работа  
-                         * Good 50-74 — оптимальная нагрузка  
-                         * Excellent 75-89 — сильная нагрузка  
-                         * Overload ≥ 90 — возможен перетрен
-                         """)
-                }
-                .padding()
-            }
-            .navigationTitle("About ZBS")
-            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

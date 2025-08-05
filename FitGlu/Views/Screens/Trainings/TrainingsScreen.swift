@@ -15,7 +15,7 @@ struct TrainingsScreen: View {
     @StateObject private var detailsVM = DetailsViewModel()
     @State private var qualities: [TrainingQuality]      = []
     @State private var activeThresholds: ZoneThresholds? = nil
-
+    @State private var showZBSInfo = false
     // MARK: – Body
     var body: some View {
         NavigationStack {
@@ -41,22 +41,24 @@ struct TrainingsScreen: View {
                     } else {
 
                         // Средний балл + суммарные минуты
-                        let avg = qualities.map(\.zoneBalanceScore).reduce(0, +)
+                        let avgScore = qualities.map(\.zoneBalanceScore).reduce(0, +)
                                   / Double(qualities.count)
 
                         MetricAccordion(
                             title: "Zone Balance",
                             summary: { showChips in
-                                ZBSSummary(
-                                    avg: avg,
-                                    totals: dayTotals,
-                                    showChips: showChips
-                                )
+                                ZBSSummary(avg: avgScore, totals: dayTotals, showChips: showChips)
                             },
-                            content: { TrainingQualityList(qualities: qualities) }
-                        )
-                        .environment(\.initialExpanded, false) // кастомный env, см. ниже
-                        .padding(.vertical, 4)
+                            collapsedBar: {
+                                ZBSCompactBar(score: avgScore)   // ← полоса в шапке (только когда свёрнуто)
+                            },
+                            content: {
+                                TrainingQualityList(qualities: qualities)
+                            },
+                            onInfoTap: { showZBSInfo = true }
+                        ).environment(\.initialExpanded, false).sheet(isPresented: $showZBSInfo) {
+                            ZBSInfoSheet()
+                        }.padding(.vertical, 4)
                     }
                 }
                 .padding()

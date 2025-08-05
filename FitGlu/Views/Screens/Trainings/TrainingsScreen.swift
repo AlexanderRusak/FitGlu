@@ -16,49 +16,57 @@ struct TrainingsScreen: View {
     @State private var qualities: [TrainingQuality]      = []
     @State private var activeThresholds: ZoneThresholds? = nil
     @State private var showZBSInfo = false
-    // MARK: – Body
+    @State private var showINTInfo = false
+
+    // NEW: интенсивность
+    @State private var intensityDay  = DayIntensity(peakHRPercent: 0, timeAbove90: 0, sawRedZone: false, hrRPE10: 0)
+    @State private var intensityList: [TrainingIntensity] = []
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-
                     headerView
                     if showPicker { datePickerView }
 
                     zoneModeToggle
                     if let t = activeThresholds { ZonesBarView(thresholds: t) }
 
-                    // ———————————  ЭТОТ кусок заменяет старый вывод карточек ——————————
                     if isLoading {
                         ProgressView("Loading…")
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.vertical, 24)
-
                     } else if qualities.isEmpty {
                         Text("No trainings for the selected day.")
                             .foregroundStyle(.secondary)
-
                     } else {
-
-                        // Средний балл + суммарные минуты
-                        let avgScore = qualities.map(\.zoneBalanceScore).reduce(0, +)
-                                  / Double(qualities.count)
+                        // Средний балл дня (ZBS)
+                        let avgScore = qualities.map(\.zoneBalanceScore).reduce(0, +) / Double(qualities.count)
 
                         MetricAccordion(
                             title: "Zone Balance",
                             summary: { showChips in
                                 ZBSSummary(avg: avgScore, totals: dayTotals, showChips: showChips)
                             },
-                            collapsedBar: {
-                                ZBSCompactBar(score: avgScore)   // ← полоса в шапке (только когда свёрнуто)
-                            },
-                            content: {
-                                TrainingQualityList(qualities: qualities)
-                            },
-                            onInfoTap: { showZBSInfo = true }
-                        ).environment(\.initialExpanded, false).sheet(isPresented: $showZBSInfo) {
-                            ZBSInfoSheet()
-                        }.padding(.vertical, 4)
+                            collapsedBar: { ZBSCompactBar(score: avgScore) },
+                            content: { TrainingQualityList(qualities: qualities) },
+                            onInfoTap: { showZBSInfo = true }          // ← это рисует и активирует «i»
+                        )
+                        .environment(\.initialExpanded, false)
+                        .sheet(isPresented: $showZBSInfo) { ZBSInfoSheet() }
+                        .padding(.vertical, 4)
+
+                        // Новая метрика — Intensity & Peaks
+                        MetricAccordion(
+                            title: "Intensity & Peaks",
+                            summary: { showChips in INTSummary(day: intensityDay, showChips: showChips) },
+                            collapsedBar: { RPECompactBar(rpe: intensityDay.hrRPE10) },
+                            content: { IntensityList(metrics: intensityList) },
+                            onInfoTap: { showINTInfo = true }
+                        )
+                        .environment(\.initialExpanded, false)
+                        .sheet(isPresented: $showINTInfo) { INTInfoSheet() }
+                        .padding(.vertical, 4)
                     }
                 }
                 .padding()
@@ -107,6 +115,12 @@ extension TrainingsScreen {
         isLoading = true
         defer { isLoading = false }
 
+        // очистим предыдущее
+        qualities = []
+        intensityList = []
+        intensityDay = DayIntensity(peakHRPercent: 0, timeAbove90: 0, sawRedZone: false, hrRPE10: 0)
+        dayTotals = .init()
+
         await detailsVM.load(for: selectedDate)   // тренировки / HR / глюкоза
         await computeQuality()
     }
@@ -117,19 +131,38 @@ extension TrainingsScreen {
         activeThresholds = thresholds
 
         let analyzer = DailyAnalyzer(thresholds: thresholds)
+
+        // 1) Качество (TIZ/ZBS)
         qualities = analyzer.analyzeDay(
             trainings: detailsVM.trainings,
             hrSegments: detailsVM.hrSegments
         )
 
-        // суммарные зоны за день — для чипов в шапке
+        // 2) Индивидуальные HRmax/HRrest
+        let hrMax  = DailyAnalyzer.estimateHRMax(from: thresholds, age: detailsVM.userAge)
+        let hrRest = DailyAnalyzer.estimateHRRest(from: detailsVM.hrDailyPoints)
+
+        // 3) Интенсивность
+        intensityList = analyzer.intensityForTrainings(
+            trainings: detailsVM.trainings,
+            hrSegments: detailsVM.hrSegments,
+            hrMax: hrMax,
+            hrRest: hrRest
+        )
+        intensityDay = analyzer.intensityForDay(
+            trainings: detailsVM.trainings,
+            hrSegments: detailsVM.hrSegments,
+            hrMax: hrMax,
+            hrRest: hrRest
+        )
+
+        // 4) Сумма зон за день — для чипов в свёрнутой шапке ZBS
         dayTotals = qualities.reduce(TimeInZone()) { acc, q in
             var t = acc;  let m = q.tiz
             t.rec += m.rec; t.fat += m.fat; t.tran += m.tran
             t.ana += m.ana; t.stress += m.stress; return t
         }
     }
-
 
     /// OFF → индивидуальные из БД, ON → «220 − возраст»
     func currentThresholds() -> ZoneThresholds {

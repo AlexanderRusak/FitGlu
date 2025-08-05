@@ -1,38 +1,34 @@
 import SwiftUI
 
 private enum CardMetrics {
-    static let insets  = EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16) // = как в TrainingQualityCard
-    static let chevron = 12.0   // ширина иконки chevron (≈12pt)
-    static let spacing = 12.0   // расстояние между chevron и заголовком
-    static let lineGap = 6.0    // вертикальный зазор между строками
-    static let barH    = 12.0   // высота полосы, как на карточке
+    static let insets  = EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
+    static let chevron = 12.0
+    static let spacing = 12.0        // между chevron и заголовком
+    static let infoGap = 0.0         // между заголовком и иконкой i
+    static let lineGap = 6.0
+    static let barH    = 12.0
 }
 
 // MARK: - Environment key to control initial state
-private struct InitialExpandedKey: EnvironmentKey {
-    static let defaultValue: Bool = true
-}
+private struct InitialExpandedKey: EnvironmentKey { static let defaultValue: Bool = true }
 extension EnvironmentValues {
-    /// Передайте `.environment(\.initialExpanded, false)` чтобы стартовать свёрнутым.
     var initialExpanded: Bool {
         get { self[InitialExpandedKey.self] }
         set { self[InitialExpandedKey.self] = newValue }
     }
 }
 
-// MARK: - Generic collapsible block (с прогресс-баром в свёрнутом виде)
+// MARK: - Generic collapsible block
 struct MetricAccordion<Summary: View, CollapsedBar: View, Content: View>: View {
 
-    // API
     let title: String
-    /// `showChips == false` → вывели "46 / 100" + капсулу; `true` → вывели чипы зон
+    /// showChips == false → правая сводка (например "46 / 100" + бейдж), true → чипы
     let summary: (_ showChips: Bool) -> Summary
-    /// Компактная полоса (как на карточке). Рисуется только когда блок свёрнут.
+    /// Полоса — показывается только в свёрнутом виде.
     let collapsedBar: () -> CollapsedBar
     let content: () -> Content
     let onInfoTap: (() -> Void)?
 
-    // State / Env
     @Environment(\.initialExpanded) private var initialExpanded
     @State private var expanded = true
 
@@ -51,52 +47,56 @@ struct MetricAccordion<Summary: View, CollapsedBar: View, Content: View>: View {
         .padding(.vertical, 4)
     }
 
-    // MARK: - Header
+    // MARK: Header
     private var header: some View {
-        Button {
-            withAnimation { expanded.toggle() }
-        } label: {
-            VStack(alignment: .leading, spacing: CardMetrics.lineGap) {
+        VStack(alignment: .leading, spacing: CardMetrics.lineGap) {
 
-                // ─ 1-я строка: chevron • title • summary ─
-                HStack(spacing: CardMetrics.spacing) {
-                    Image(systemName: expanded ? "chevron.down" : "chevron.right")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: CardMetrics.chevron, alignment: .center)
+            // chevron • title • (i) • … • summary
+            HStack(spacing: CardMetrics.spacing) {
+                Image(systemName: expanded ? "chevron.down" : "chevron.right")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: CardMetrics.chevron, alignment: .center)
 
-                    Text(title)
-                        .font(.headline)
-                        .lineLimit(1)
-                        .layoutPriority(10)
+                // Заголовок
+                Text(title)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .layoutPriority(10)
+                    .onTapGesture { withAnimation { expanded.toggle() } } // тап по названию тоже разворачивает
 
-                    Spacer(minLength: 4)
-                    summary(false).fixedSize()
-                }
-
-                // ─ 2-я строка (только в свёрнутом виде):
-                //     полоса прогресса + чипы, выровнены под начало Title
-                if !expanded {
-                    VStack(alignment: .leading, spacing: 6) {
-                        collapsedBar()
-                            .frame(height: CardMetrics.barH)
-
-                        summary(true)        // чипы суммарного времени
+                // Иконка i СРАЗУ ПОСЛЕ заголовка
+                if let onInfoTap {
+                    Button(action: onInfoTap) {
+                        Image(systemName: "info.circle").font(.body)
                     }
-                    .padding(.leading, CardMetrics.chevron + CardMetrics.spacing)
+                    .buttonStyle(.plain)
+                    .padding(.leading, CardMetrics.infoGap)
                 }
+
+                Spacer(minLength: 4)
+
+                // правая сводка (без чипов)
+                summary(false).fixedSize()
             }
-            // ВНУТРЕННИЕ отступы карточки — те же, что у TrainingQualityCard
-            .padding(CardMetrics.insets)
-            // Фон карточки рисуем только в свёрнутом состоянии
-            .background(
-                !expanded
-                ? AnyView(RoundedRectangle(cornerRadius: 14).fill(.ultraThinMaterial))
-                : AnyView(EmptyView())
-            )
-            .contentShape(Rectangle())
+
+            // ─ в свёрнутом виде: полоса и чипы
+            if !expanded {
+                collapsedBar()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: CardMetrics.barH)
+                    .padding(.leading, CardMetrics.chevron + CardMetrics.spacing)
+
+                summary(true)
+                    .padding(.leading, CardMetrics.chevron + CardMetrics.spacing)
+            }
         }
-        .buttonStyle(.plain)
-        .padding(.horizontal, 4)   // внешний зазор между карточками на списке
+        .padding(CardMetrics.insets)
+        .background(
+            Group { if !expanded { RoundedRectangle(cornerRadius: 14).fill(.ultraThinMaterial) } }
+        )
+        .contentShape(Rectangle())
+        .onTapGesture { withAnimation { expanded.toggle() } } // тап по всей шапке (кроме кнопки i)
+        .padding(.horizontal, 4)
     }
 }

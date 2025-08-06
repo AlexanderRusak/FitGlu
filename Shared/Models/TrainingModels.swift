@@ -22,12 +22,20 @@ public struct TrainingRow {
     public let type: String
     public let startTime: Double
     public let endTime: Double
+    public let energyKcal: Double?     // ← NEW (active/total energy)
     
-    public init(id: Int64, type: String, startTime: Double, endTime: Double) {
+    public init(
+        id: Int64,
+        type: String,
+        startTime: Double,
+        endTime: Double,
+        energyKcal: Double? = nil
+    ) {
         self.id = id
         self.type = type
         self.startTime = startTime
         self.endTime = endTime
+        self.energyKcal = energyKcal
     }
 }
 

@@ -17,10 +17,16 @@ struct TrainingsScreen: View {
     @State private var activeThresholds: ZoneThresholds? = nil
     @State private var showZBSInfo = false
     @State private var showINTInfo = false
+    @State private var showENEInfo = false
 
     // NEW: интенсивность
     @State private var intensityDay  = DayIntensity(peakHRPercent: 0, timeAbove90: 0, sawRedZone: false, hrRPE10: 0)
     @State private var intensityList: [TrainingIntensity] = []
+    
+    @State private var eneList: [EnergyTrainingEfficiency] = []
+    @State private var eneDay  = EnergyDayEfficiency(totalKcal: 0, totalStressSec: 0, kcalPerStressMin: 0)
+
+
 
     var body: some View {
         NavigationStack {
@@ -67,6 +73,23 @@ struct TrainingsScreen: View {
                         .environment(\.initialExpanded, false)
                         .sheet(isPresented: $showINTInfo) { INTInfoSheet() }
                         .padding(.vertical, 4)
+                        
+                        MetricAccordion(
+                            title: "Energy Efficiency",
+                            summary: { showChips in
+                                ENESummary(day: eneDay, showChips: showChips)
+                            },
+                            collapsedBar: {
+                                ENECompactBar(eff: eneDay.kcalPerStressMin)
+                            },
+                            content: {
+                                ENEList(items: eneList)
+                            },
+                            onInfoTap: { showENEInfo = true }
+                        )
+                        .environment(\.initialExpanded, false)
+                        .padding(.vertical, 4)
+                        .sheet(isPresented: $showENEInfo) { ENEInfoSheet() } // ↓ см. ниже
                     }
                 }
                 .padding()
@@ -162,6 +185,27 @@ extension TrainingsScreen {
             t.rec += m.rec; t.fat += m.fat; t.tran += m.tran
             t.ana += m.ana; t.stress += m.stress; return t
         }
+        
+        // Провайдер калорий ровно под сигнатуру: (TrainingRow) -> Double?
+        let eneProvider: (TrainingRow) -> Double? = { tr in
+            detailsVM.energyByTraining[tr.id]    // вернёт Double? (nil если нет)
+        }
+
+        let list: [EnergyTrainingEfficiency] =  analyzer.energyEfficiencyForTrainings(
+            trainings: detailsVM.trainings,
+            hrSegments: detailsVM.hrSegments,
+            kcalProvider: eneProvider
+        )
+        let day: EnergyDayEfficiency =  analyzer.energyEfficiencyForDay(
+            trainings: detailsVM.trainings,
+            hrSegments: detailsVM.hrSegments,
+            kcalProvider: eneProvider
+        )
+
+        self.eneList = list
+        self.eneDay  = day
+        
+        print("energyByTraining:", detailsVM.energyByTraining)
     }
 
     /// OFF → индивидуальные из БД, ON → «220 − возраст»
@@ -172,4 +216,5 @@ extension TrainingsScreen {
         return (try? AverageZonesDBManager.shared.fetchAverageZones())
             ?? DefaultZonesProvider.estimate(age: detailsVM.userAge ?? 30)
     }
+    
 }

@@ -88,6 +88,7 @@
 				Analize/ScoreLevel.swift,
 				Analize/SessionAnalyzer.swift,
 				"Analize/SessionDTO+ShiftedGlucose.swift",
+				Analize/Utils.swift,
 				Views/ActivityChart/DefaultZonesProvider.swift,
 			);
 			target = 708E05742CF352A500489532 /* FitGlu Watch App */;

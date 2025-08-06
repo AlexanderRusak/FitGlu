@@ -1,6 +1,21 @@
 // DailyAnalyzer.swift
 import Foundation
 
+public struct EnergyTrainingEfficiency: Identifiable {
+    public let id: Int64
+    public let training: TrainingRow
+    public let kcal: Double              // суммарные активные ккал за тренировку
+    public let stressSec: TimeInterval   // время в Z5+, сек
+    public let kcalPerStressMin: Double  // kcal / (stressSec/60)
+}
+
+public struct EnergyDayEfficiency {
+    public let totalKcal: Double
+    public let totalStressSec: TimeInterval
+    public let kcalPerStressMin: Double
+}
+
+
 // MARK: - Public types (для UI)
 
 public struct TrainingQuality: Identifiable {
@@ -346,4 +361,53 @@ public final class DailyAnalyzer {
         return (peakPct, t90, sawRed, rpe10, avgHR, sumDT)
     }
     
+    /// Эффективность по каждой тренировке: kcal / Stress-min.
+       /// - Parameter kcalProvider: как получить ккал для конкретной тренировки.
+       ///   Верните `nil`, если данных нет — тогда считаем 0.
+    func energyEfficiencyForTrainings(
+        trainings: [TrainingRow],
+        hrSegments: [[HRPoint]],
+        kcalProvider: (TrainingRow) -> Double?
+    ) -> [EnergyTrainingEfficiency] {
+
+        // получаем TIZ по всем тренировкам дня
+        let qs = analyzeDay(trainings: trainings, hrSegments: hrSegments)
+
+        return qs.map { q in
+            let kcal = kcalProvider(q.training) ?? 0
+            let stressSec = q.tiz.stress
+            let eff = safeRate(kcal: kcal, stressSec: stressSec)    
+
+            return EnergyTrainingEfficiency(
+                id: q.id,
+                training: q.training,
+                kcal: kcal,
+                stressSec: stressSec,
+                kcalPerStressMin: eff
+            )
+        }
+    }
+
+    func energyEfficiencyForDay(
+        trainings: [TrainingRow],
+        hrSegments: [[HRPoint]],
+        kcalProvider: (TrainingRow) -> Double?
+    ) -> EnergyDayEfficiency {
+
+        let perWorkout = energyEfficiencyForTrainings(
+            trainings: trainings,
+            hrSegments: hrSegments,
+            kcalProvider: kcalProvider
+        )
+
+        let totalKcal    = perWorkout.reduce(0.0) { $0 + $1.kcal }
+        let totalStress  = perWorkout.reduce(0.0) { $0 + $1.stressSec }
+        let dayEff       = safeRate(kcal: totalKcal, stressSec: totalStress)
+
+        return EnergyDayEfficiency(
+            totalKcal: totalKcal,
+            totalStressSec: totalStress,
+            kcalPerStressMin: dayEff
+        )
+    }
 }

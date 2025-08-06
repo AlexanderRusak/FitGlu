@@ -1,20 +1,23 @@
 import Foundation
 import HealthKit
 
-class HealthKitAuthorizationManager: ObservableObject {
+final class HealthKitAuthorizationManager: ObservableObject {
     private let healthStore = HKHealthStore()
 
     func requestAuthorization(completion: @escaping (Bool, Error?) -> Void) {
         guard HKHealthStore.isHealthDataAvailable() else {
-            completion(false, NSError(domain: "HealthKit", code: -1, userInfo: [NSLocalizedDescriptionKey: "HealthKit недоступен"]))
+            completion(false, NSError(domain: "HealthKit",
+                                      code: -1,
+                                      userInfo: [NSLocalizedDescriptionKey: "HealthKit недоступен"]))
             return
         }
 
-        let workoutType = HKObjectType.workoutType()
         let readTypes: Set<HKObjectType> = [
-            workoutType,
+            HKObjectType.workoutType(),
             HKObjectType.quantityType(forIdentifier: .heartRate)!,
             HKObjectType.quantityType(forIdentifier: .bloodGlucose)!,
+            HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!, // kcal
+            HKObjectType.quantityType(forIdentifier: .bodyMass)!,           // (на будущее)
             HKObjectType.characteristicType(forIdentifier: .biologicalSex)!,
             HKObjectType.characteristicType(forIdentifier: .dateOfBirth)!
         ]
@@ -26,15 +29,10 @@ class HealthKitAuthorizationManager: ObservableObject {
 
     func fetchAge(completion: @escaping (Int?) -> Void) {
         do {
-            let birthDate = try healthStore.dateOfBirthComponents()
-            let calendar = Calendar.current
-            let now = Date()
-            if let birthYear = birthDate.year {
-                let age = calendar.component(.year, from: now) - birthYear
-                completion(age)
-            } else {
-                completion(nil)
-            }
+            let birth = try healthStore.dateOfBirthComponents()
+            guard let year = birth.year else { completion(nil); return }
+            let nowYear = Calendar.current.component(.year, from: Date())
+            completion(nowYear - year)
         } catch {
             print("Ошибка получения возраста: \(error.localizedDescription)")
             completion(nil)
@@ -43,8 +41,7 @@ class HealthKitAuthorizationManager: ObservableObject {
 
     func fetchBiologicalSex(completion: @escaping (HKBiologicalSex?) -> Void) {
         do {
-            let biologicalSex = try healthStore.biologicalSex().biologicalSex
-            completion(biologicalSex)
+            completion(try healthStore.biologicalSex().biologicalSex)
         } catch {
             print("Ошибка получения пола: \(error.localizedDescription)")
             completion(nil)

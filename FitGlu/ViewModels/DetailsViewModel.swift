@@ -12,6 +12,7 @@ final class DetailsViewModel: ObservableObject {
     @Published var hrDailyPoints : [HRPoint]         = []
     @Published var hrSegments    : [[HRPoint]]       = []
     @Published var zones         : ZoneThresholds?   // ← added zone storage
+    @Published var energyByTraining: [Int64 : Double] = [:]  // kcal по каждой тренировке
 
     // MARK: – Providers
     private let local = LocalDBProvider()              // SQLite
@@ -83,6 +84,8 @@ final class DetailsViewModel: ObservableObject {
                 }
             }
         }
+        
+        self.energyByTraining = await hk.energyByTraining(for: trainings)
 
     }
 

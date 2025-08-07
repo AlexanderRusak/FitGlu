@@ -247,20 +247,22 @@ public final class DailyAnalyzer {
     /// Накопление TIZ по «ступенчатой» кривой HR (hold-to-next)
     private func accumulateTIZ(from segments: [[HRPoint]],
                                within interval: ClosedRange<Date>) -> TimeInZone {
-
         var tiz = TimeInZone()
 
         for seg in segments where seg.count >= 2 {
             for i in 0..<(seg.count - 1) {
-                let p = seg[i]
-                let q = seg[i + 1]
+                let p = seg[i], q = seg[i + 1]
 
                 let t0 = max(p.time, interval.lowerBound)
                 let t1 = min(q.time, interval.upperBound)
                 guard t1 > t0 else { continue }
 
                 let dt = t1.timeIntervalSince(t0)
-                switch zone(for: p.bpm) {
+
+                // ⬇️ ключевая строка: если p до интервала — используй bpm первой внутренней точки
+                let bpmForSlice = (p.time < interval.lowerBound) ? q.bpm : p.bpm
+
+                switch zone(for: bpmForSlice) {
                 case .rec:    tiz.rec    += dt
                 case .fat:    tiz.fat    += dt
                 case .tran:   tiz.tran   += dt
@@ -269,18 +271,30 @@ public final class DailyAnalyzer {
                 }
             }
         }
+        print("tiz=",tiz, terminator: "\n")
         return tiz
     }
 
+
     /// Определение зоны по bpm
     private func zone(for bpm: Int) -> ZoneKind {
-        if z1.contains(bpm) { return .rec }
-        if z2.contains(bpm) { return .fat }
-        if z3.contains(bpm) { return .tran }
-        if z4.contains(bpm) { return .ana }
-        // всё, что выше z4 верхнего, считаем стрессом (включая z5)
-        return .stress
+        // быстрые фильтры от мусорных значений
+        if bpm <= 30 { return .rec }              // датчик споткнулся — считаем Recovery
+        if bpm >= 230 { return .stress }
+
+        let b1 = z1.lowerBound
+        let b2 = z2.lowerBound
+        let b3 = z3.lowerBound
+        let b4 = z4.lowerBound
+        let b5 = z5.lowerBound
+
+        if bpm < b2 { return .rec }    // Z1
+        if bpm < b3 { return .fat }    // Z2
+        if bpm < b4 { return .tran }   // Z3
+        if bpm < b5 { return .ana }    // Z4
+        return .stress                 // Z5 и выше
     }
+
 
     /// Баланс зон 0–100
     private func zoneBalance(tiz: TimeInZone) -> Double {

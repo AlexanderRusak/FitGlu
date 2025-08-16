@@ -84,11 +84,8 @@
 		70A5CB532E2BB94A00A3E174 /* Exceptions for "FitGlu" folder in "FitGlu Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Analize/DailyAnalyzer.swift,
-				Analize/ScoreLevel.swift,
-				Analize/SessionAnalyzer.swift,
-				"Analize/SessionDTO+ShiftedGlucose.swift",
-				Analize/Utils.swift,
+				Analize/Core/Session/SessionAnalyzer.swift,
+				"Analize/Models/SessionDTO+ShiftedGlucose.swift",
 				Views/ActivityChart/DefaultZonesProvider.swift,
 			);
 			target = 708E05742CF352A500489532 /* FitGlu Watch App */;

@@ -1,21 +1,18 @@
 import Foundation
 
 @inline(__always)
-func safeRate(kcal: Double,
-              stressSec: TimeInterval,
-              minSeconds: TimeInterval = 60) -> Double {
-    guard stressSec >= minSeconds else { return 0 }   // < 1 мин — «данных нет»
+func safeRate(kcal: Double, stressSec: TimeInterval, minSeconds: TimeInterval = 60) -> Double {
+    guard stressSec >= minSeconds else { return 0 }
     return kcal / (stressSec / 60.0)
 }
 
 func stressLabel(_ seconds: TimeInterval) -> String {
-    seconds < 60 ? "<1m" : "\(Int(seconds / 60))m"
+    if seconds < 60 { return "<1m" }
+    let m = Int(seconds.rounded() / 60)
+    return "\(m)m"
 }
 
-
-func effText(kcalPerStressMin: Double,
-             stressSec: TimeInterval,
-             showDash: Bool = true) -> String {
+func effText(kcalPerStressMin: Double, stressSec: TimeInterval, showDash: Bool = true) -> String {
     guard stressSec >= 60 else { return showDash ? "—" : "0.0" }
     return String(format: "%.1f", kcalPerStressMin)
 }

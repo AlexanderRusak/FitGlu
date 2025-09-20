@@ -39,6 +39,23 @@ public struct ZoneThresholds: Codable {
     public let z1, z2, z3, z4, z5: [Int]   // [low, high]
 }
 
+extension ZoneThresholds {
+    func asBPMDictionary() -> [String: ClosedRange<Int>] {
+        func makeRange(_ arr: [Int]) -> ClosedRange<Int>? {
+            guard arr.count == 2 else { return nil }
+            let lo = min(arr[0], arr[1]), hi = max(arr[0], arr[1])
+            return lo <= hi ? (lo...hi) : nil
+        }
+        var dict: [String: ClosedRange<Int>] = [:]
+        if let r = makeRange(z1) { dict["Recovery"] = r }
+        if let r = makeRange(z2) { dict["Fat"]      = r }
+        if let r = makeRange(z3) { dict["Trans"]    = r }
+        if let r = makeRange(z4) { dict["Ana"]      = r }
+        if let r = makeRange(z5) { dict["Stress"]   = r }
+        return dict
+    }
+}
+
 public struct SessionDTO: Identifiable, Codable {
     public let id = UUID()
     public let start, end: TimeInterval

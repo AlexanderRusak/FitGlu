@@ -160,4 +160,110 @@ final class HealthKitWorkoutProvider: ObservableObject {
             store.execute(q)
         }
     }
+    
+    // Удобный дневной интервал
+    private func dayRange(_ day: Date) -> (Date, Date) {
+        (day.startOfDay, day.endOfDay)
+    }
+
+    // Шаги за день (шт)
+    func steps(on day: Date) async -> Int {
+        guard let type = HKObjectType.quantityType(forIdentifier: .stepCount) else { return 0 }
+        let (start, end) = dayRange(day)
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+
+        return await withCheckedContinuation { cont in
+            let q = HKStatisticsQuery(quantityType: type,
+                                      quantitySamplePredicate: predicate,
+                                      options: .cumulativeSum) { _, stats, _ in
+                let val = stats?.sumQuantity()?.doubleValue(for: HKUnit.count()) ?? 0
+                cont.resume(returning: Int(val.rounded()))
+            }
+            self.store.execute(q)
+        }
+    }
+
+    // Белок за день (граммы)
+    func dietaryProteinGrams(on day: Date) async -> Double {
+        guard let type = HKObjectType.quantityType(forIdentifier: .dietaryProtein) else { return 0 }
+        let (start, end) = dayRange(day)
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+
+        return await withCheckedContinuation { cont in
+            let q = HKStatisticsQuery(quantityType: type,
+                                      quantitySamplePredicate: predicate,
+                                      options: .cumulativeSum) { _, stats, _ in
+                let grams = stats?.sumQuantity()?.doubleValue(for: HKUnit.gram()) ?? 0
+                cont.resume(returning: grams)
+            }
+            self.store.execute(q)
+        }
+    }
+
+    // Сон за день (минуты “во сне”)
+    func sleepMinutes(on day: Date) async -> Int {
+        guard let type = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else { return 0 }
+        let (start, end) = dayRange(day)
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+
+        return await withCheckedContinuation { cont in
+            let q = HKSampleQuery(sampleType: type,
+                                  predicate: predicate,
+                                  limit: HKObjectQueryNoLimit,
+                                  sortDescriptors: nil) { _, samples, _ in
+                let cats = samples as? [HKCategorySample] ?? []
+                var total: TimeInterval = 0
+
+                for s in cats {
+                    // Пересечение с сутками
+                    let s1 = max(s.startDate, start)
+                    let e1 = min(s.endDate,   end)
+                    guard e1 > s1 else { continue }
+
+                    let v = s.value
+                    // На iOS 16+ есть .asleepCore/.asleepREM/.asleepDeep, на старых — .asleep
+                    let asleepValues: Set<Int> = {
+                        if #available(iOS 16.0, *) {
+                            return [
+                                HKCategoryValueSleepAnalysis.asleepREM.rawValue,
+                                HKCategoryValueSleepAnalysis.asleepCore.rawValue,
+                                HKCategoryValueSleepAnalysis.asleepDeep.rawValue
+                            ]
+                        } else {
+                            return [HKCategoryValueSleepAnalysis.asleep.rawValue]
+                        }
+                    }()
+                    if asleepValues.contains(v) {
+                        total += e1.timeIntervalSince(s1)
+                    }
+                }
+                cont.resume(returning: Int((total/60).rounded()))
+            }
+            self.store.execute(q)
+        }
+    }
+    
+    func bodyMass(on day: Date) async -> Double? {
+        let type = HKQuantityType.quantityType(forIdentifier: .bodyMass)!
+        let start = day.startOfDay
+        let end = day.endOfDay
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end)
+
+        return await withCheckedContinuation { (cont: CheckedContinuation<Double?, Never>) in
+            let query = HKSampleQuery(
+                sampleType: type,
+                predicate: predicate,
+                limit: 1,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)]
+            ) { _, samples, _ in
+                if let sample = samples?.first as? HKQuantitySample {
+                    let kg = sample.quantity.doubleValue(for: .gramUnit(with: .kilo))
+                    cont.resume(returning: kg)
+                } else {
+                    cont.resume(returning: nil)
+                }
+            }
+            self.store.execute(query)
+        }
+    }
 }

@@ -25,6 +25,9 @@ struct TrainingsScreen: View {
     
     @State private var eneList: [EnergyTrainingEfficiency] = []
     @State private var eneDay  = EnergyDayEfficiency(totalKcal: 0, totalStressSec: 0, kcalPerStressMin: 0)
+    
+    @State private var computedHRMax: Int = 0
+    @State private var computedHRRest: Int = 0
 
     // ADD: AI (ChatGPT)
     @State private var showAISheet = false
@@ -194,60 +197,100 @@ extension TrainingsScreen {
     func computeQuality() async {
         let thresholds = currentThresholds()
         activeThresholds = thresholds
-
         let analyzer = DailyAnalyzer(thresholds: thresholds)
 
-        // 1) Качество (TIZ/ZBS)
+        // 1) ZBS
         qualities = analyzer.analyzeDay(
             trainings: detailsVM.trainings,
             hrSegments: detailsVM.hrSegments
         )
 
-        // 2) Индивидуальные HRmax/HRrest
-        let hrMax  = DailyAnalyzer.estimateHRMax(from: thresholds, age: detailsVM.userAge)
-        let hrRest = DailyAnalyzer.estimateHRRest(from: detailsVM.hrDailyPoints)
+        // 2) HRrest + базовый HRmax из БД/дефолт
+        let hrRest = DailyAnalyzer.estimateHRRestSmart(from: detailsVM.hrDailyPoints)
+        let hrMaxFromDBOrDefault: Int = HRMaxDBManager.shared.valueOrDefault(age: detailsVM.userAge)
 
-        // 3) Интенсивность
+        if let meta = HRMaxDBManager.shared.currentRecord() {
+            print("🫀 HRrest=\(hrRest), HRmax(DB)=\(meta.value) (at \(Date(timeIntervalSince1970: meta.recordedAt)))")
+        } else {
+            print("🫀 HRrest=\(hrRest), HRmax(default)=\(hrMaxFromDBOrDefault)")
+        }
+
+        // 3) Пик за день
+        let observedPeak = detailsVM.hrDailyPoints.filter(\.inWorkout).map(\.bpm).max() ?? 0
+        print("⛰️ Observed peak bpm in workouts=\(observedPeak)")
+
+        // ≥90% HR
+        let evidSecAt90 = evidenceSecondsAt90(
+            segments: detailsVM.hrSegments,
+            thresholds: thresholds,
+            hrMax: hrMaxFromDBOrDefault
+        )
+
+        // 4) Обновление «точки правды»
+        if let tsOfPeak = detailsVM.hrDailyPoints.first(where: { $0.inWorkout && $0.bpm == observedPeak })?.time {
+            let result = HRMaxDBManager.shared.bumpIfHigher(
+                observed: observedPeak,
+                recordedAt: tsOfPeak.timeIntervalSince1970,
+                sourceTrainingId: detailsVM.trainings.first?.id,
+                evidenceSecAt90: Int(evidSecAt90.rounded())
+            )
+            print("🗃️ HRMaxDB.bumpIfHigher → \(result)")
+        }
+
+        // 5) Какой HRmax использовать
+        let hrMaxUsed: Int
+        if useStandardZones {
+            let age = detailsVM.userAge ?? 30
+            hrMaxUsed = min(230, max(160, 220 - age))
+            print("🔧 HRmax USED = \(hrMaxUsed) (mode=standard 220−age, age=\(age))")
+        } else {
+            hrMaxUsed = HRMaxDBManager.shared.valueOrDefault(age: detailsVM.userAge)
+            if let meta = HRMaxDBManager.shared.currentRecord() {
+                print("🔧 HRmax USED = \(hrMaxUsed) (mode=DB, recordedAt=\(Date(timeIntervalSince1970: meta.recordedAt)))")
+            } else {
+                print("🔧 HRmax USED = \(hrMaxUsed) (mode=DB/default, no meta)")
+            }
+        }
+
+        // сохранить для AI/контекста
+        computedHRMax  = hrMaxUsed
+        computedHRRest = hrRest
+
+        // 6) Интенсивность
         intensityList = analyzer.intensityForTrainings(
             trainings: detailsVM.trainings,
             hrSegments: detailsVM.hrSegments,
-            hrMax: hrMax,
+            hrMax: hrMaxUsed,
             hrRest: hrRest
         )
         intensityDay = analyzer.intensityForDay(
             trainings: detailsVM.trainings,
             hrSegments: detailsVM.hrSegments,
-            hrMax: hrMax,
+            hrMax: hrMaxUsed,
             hrRest: hrRest
         )
 
-        // 4) Сумма зон за день — для чипов в свёрнутой шапке ZBS
+        // 7) Totals
         dayTotals = qualities.reduce(TimeInZone()) { acc, q in
-            var t = acc;  let m = q.tiz
+            var t = acc; let m = q.tiz
             t.rec += m.rec; t.fat += m.fat; t.tran += m.tran
             t.ana += m.ana; t.stress += m.stress; return t
         }
-        
-        // Провайдер калорий ровно под сигнатуру: (TrainingRow) -> Double?
-        let eneProvider: (TrainingRow) -> Double? = { tr in
-            detailsVM.energyByTraining[tr.id]    // вернёт Double? (nil если нет)
-        }
 
-        let list: [EnergyTrainingEfficiency] =  analyzer.energyEfficiencyForTrainings(
+        // 8) Энергия
+        let eneProvider: (TrainingRow) -> Double? = { tr in detailsVM.energyByTraining[tr.id] }
+        eneList = analyzer.energyEfficiencyForTrainings(
             trainings: detailsVM.trainings,
             hrSegments: detailsVM.hrSegments,
             kcalProvider: eneProvider
         )
-        let day: EnergyDayEfficiency =  analyzer.energyEfficiencyForDay(
+        eneDay  = analyzer.energyEfficiencyForDay(
             trainings: detailsVM.trainings,
             hrSegments: detailsVM.hrSegments,
             kcalProvider: eneProvider
         )
-
-        self.eneList = list
-        self.eneDay  = day
     }
-    
+
     @MainActor
     func aiPing() async {
         aiBusy = true
@@ -397,13 +440,21 @@ extension TrainingsScreen {
             // --- Context (индивидуальные зоны) ---
             var ctx: AIDayMetrics.Context? = nil
             if let t = activeThresholds {
-                let hrMax  = DailyAnalyzer.estimateHRMax(from: t, age: detailsVM.userAge)
-                let hrRest = DailyAnalyzer.estimateHRRest(from: detailsVM.hrDailyPoints)
+                let hrMax  = computedHRMax
+                let hrRest = computedHRRest
+                let zonesBPM = t.asBPMDictionary()
 
-                let zonesBPM = t.asBPMDictionary()   // ← используем расширение
-                if !zonesBPM.isEmpty {
-                    ctx = .init(hrMax: hrMax, hrRest: hrRest, zonesBPM: zonesBPM)
-                }
+                ctx = .init(
+                    hrMax: hrMax,
+                    hrRest: hrRest,
+                    zonesBPM: zonesBPM,
+                    steps: detailsVM.dailySteps,
+                    sleepMin: detailsVM.dailySleepMin,
+                    proteinG: detailsVM.dailyProteinG,
+                    age: detailsVM.userAge,
+                    sex: detailsVM.userSex?.stringValue,
+                    bodyMassKg: detailsVM.dailyBodyMassKg
+                )
             }
 
             return AIDayMetrics(
@@ -433,6 +484,16 @@ extension TrainingsScreen {
         }.joined(separator: ", ")
     }
     
+    private func lifestyleLine(_ c: AIDayMetrics.Context?) -> String {
+        guard let c else { return "" }
+        var parts: [String] = []
+        if let s  = c.steps,     s  > 0 { parts.append("шаги \(s)") }
+        if let sl = c.sleepMin,  sl > 0 { parts.append("сон \(sl) мин") }
+        if let p  = c.proteinG,  p  > 0 { parts.append("белок \(Int(p.rounded())) г") }
+        return parts.isEmpty ? "" : "\nДоп. контекст: " + parts.joined(separator: ", ") + "."
+    }
+
+    // TrainingsScreen.swift
     func makeDayPrompt(day m: AIDayMetrics, trainings tm: [AITrainingMetrics]) -> String {
         let zoneInfo: String = {
             guard let c = m.context else { return "" }
@@ -447,7 +508,18 @@ extension TrainingsScreen {
             (t.energy.kcalPerStressMin != nil ? ", \(String(format: "%.1f", t.energy.kcalPerStressMin!)) ккал/стресс-мин" : "")
         }.joined(separator: "\n")
 
-        return """
+        let lifestyle = lifestyleLine(m.context)
+        
+        let personal: String = {
+            guard let c = m.context else { return "" }
+            var parts: [String] = []
+            if let a = c.age { parts.append("возраст \(a)") }
+            if let s = c.sex { parts.append("пол \(s)") }
+            if let w = c.bodyMassKg { parts.append("вес \(Int(w.rounded())) кг") } 
+            return parts.isEmpty ? "" : "\nПерсональные данные: " + parts.joined(separator: ", ") + "."
+        }()
+        
+        let prompt = """
         Ты — строгий и поддерживающий эксперт по фитнесу и композиции тела. Твоя цель — помочь человеку выглядеть лучше (жиросжигание, рельеф, осанка), при этом сохранять здоровье, мотивацию и прогресс. Пиши по-русски, кратко и уверенно.
 
         Проанализируй день \(m.dateISO).
@@ -458,16 +530,38 @@ extension TrainingsScreen {
         [Итоги дня]
         • Zone Balance дня: \(m.zoneBalance.zbsScore)/100; суммарные минуты — Rec \(m.zoneBalance.timeRecovMin), Fat \(m.zoneBalance.timeFatMin), Trans \(m.zoneBalance.timeTransMin), Ana \(m.zoneBalance.timeAnaMin), Stress \(m.zoneBalance.timeStressMin).
         • Intensity & Peaks: RPE \(m.intensity.rpe10)/10; пик HR \(m.intensity.peakHRPercent)% от HRmax; ≥90% HR — \(m.intensity.timeAt90plusMin) мин; красная зона: \(m.intensity.sawRedZone ? "да" : "нет").
-        • Energy: всего \(m.energy.totalKcal) ккал; стресс \(m.energy.stressSeconds/60) мин; ккал/стресс-мин \(m.energy.kcalPerStressMin.map { String(format: "%.1f", $0) } ?? "—").\(zoneInfo)
+        • Energy: всего \(m.energy.totalKcal) ккал; стресс \(m.energy.stressSeconds/60) мин; ккал/стресс-мин \(m.energy.kcalPerStressMin.map { String(format: "%.1f", $0) } ?? "—").\(zoneInfo)\(lifestyle)\(personal)
 
         [Задача]
         1) Короткий разбор КАЖДОЙ тренировки: что сработало для формы (жир/тонус), что лишнее/опасно.
         2) Общий вывод дня: баланс зон, интенсивность, эффективность с точки зрения цели «выглядеть лучше».
-        3) 1–3 конкретных рекомендации на завтра (зона, объём, интенсивность/шаги; при необходимости — короткая ремарка по восстановлению/сну).
+        3) Учитывая шаги/сон/белок из контекста, дай 1–3 конкретных рекомендации на завтра (зона, объём, интенсивность/шаги; при необходимости — ремарка по восстановлению/сну/питанию).
         4) Признаки прогресса или перегрузки и что сегодня/завтра лучше не делать.
         5) Заверши одной мотивирующей фразой тренера.
 
-        Пиши списком, без воды. Если данных недостаточно — явно укажи, что не хватает (но всё равно дай краткий план).
+        Пиши списком, без воды. Если данных недостаточно — явно укажи, чего не хватает (но всё равно дай краткий план).
         """
+        
+        return prompt
+    }
+
+    private func evidenceSecondsAt90(segments: [[HRPoint]],
+                                     thresholds: ZoneThresholds,
+                                     hrMax: Int) -> TimeInterval {
+        let p90 = DailyAnalyzer.bpmAt90Percent(thresholds: thresholds, hrMax: hrMax)
+        var sec: TimeInterval = 0
+        for seg in segments {
+            guard seg.count > 1 else { continue }
+            for i in 0..<(seg.count - 1) {
+                let a = seg[i], b = seg[i+1]
+                // грубая интеграция «ступеньками»: учитываем интервал только если обе точки ≥ p90
+                if a.bpm >= p90 && b.bpm >= p90 {
+                    sec += b.time.timeIntervalSince(a.time)
+                }
+            }
+        }
+        return max(0, sec)
     }
 }
+
+

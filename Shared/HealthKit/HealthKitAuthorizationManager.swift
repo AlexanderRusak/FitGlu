@@ -18,6 +18,11 @@ final class HealthKitAuthorizationManager: ObservableObject {
             HKObjectType.quantityType(forIdentifier: .bloodGlucose)!,
             HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!, // kcal
             HKObjectType.quantityType(forIdentifier: .bodyMass)!,           // (на будущее)
+            
+            HKObjectType.quantityType(forIdentifier: .stepCount)!,             // шаги
+            HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!,         // сон
+            HKObjectType.quantityType(forIdentifier: .dietaryProtein)!,        // белок (г)
+            
             HKObjectType.characteristicType(forIdentifier: .biologicalSex)!,
             HKObjectType.characteristicType(forIdentifier: .dateOfBirth)!
         ]
@@ -45,6 +50,18 @@ final class HealthKitAuthorizationManager: ObservableObject {
         } catch {
             print("Ошибка получения пола: \(error.localizedDescription)")
             completion(nil)
+        }
+    }
+}
+
+extension HKBiologicalSex {
+    var stringValue: String {
+        switch self {
+        case .male: return "male"
+        case .female: return "female"
+        case .other: return "other"
+        case .notSet: return "unknown"
+        @unknown default: return "unknown"
         }
     }
 }

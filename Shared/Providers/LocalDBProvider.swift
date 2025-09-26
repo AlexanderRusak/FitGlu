@@ -1,10 +1,3 @@
-//
-//   LocalDBProvider.swift
-//  FitGlu
-//
-//  Created by Александр Русак on 03/05/2025.
-//
-
 import Foundation
 
 struct LocalDBProvider {

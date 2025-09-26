@@ -22,18 +22,4 @@ public final class DailyAnalyzer {
     public static func withDefault(age: Int) -> DailyAnalyzer {
         DailyAnalyzer(thresholds: DefaultZonesProvider.estimate(age: age))
     }
-
-    public static func estimateHRMax(from thresholds: ZoneThresholds, age: Int?) -> Int {
-        if thresholds.z5.count >= 2 { return thresholds.z5[1] }
-        if let age = age { return max(150, 220 - age) }
-        return 190
-    }
-
-    /// Берём 5-й перцентиль дневных точек как HRrest (устойчивее «абсолютного» минимума).
-    static func estimateHRRest(from hrPoints: [HRPoint], fallback: Int = 60) -> Int {
-        let vals = hrPoints.map(\.bpm).sorted()
-        guard vals.count >= 5 else { return fallback }
-        let idx = max(0, Int(Double(vals.count) * 0.05))
-        return vals[idx]
-    }
 }

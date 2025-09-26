@@ -13,7 +13,12 @@ final class DetailsViewModel: ObservableObject {
     @Published var hrSegments    : [[HRPoint]]       = []
     @Published var zones         : ZoneThresholds?   // ← added zone storage
     @Published var energyByTraining: [Int64 : Double] = [:]  // kcal по каждой тренировке
-
+    @Published var dailySteps: Int = 0
+    @Published var dailySleepMin: Int = 0
+    @Published var dailyProteinG: Double = 0
+    @Published var dailyBodyMassKg: Double? = nil
+    
+    
     // MARK: – Providers
     private let local = LocalDBProvider()              // SQLite
     private let hk    = HealthKitWorkoutProvider()     // HealthKit
@@ -86,6 +91,10 @@ final class DetailsViewModel: ObservableObject {
         }
         
         self.energyByTraining = await hk.energyByTraining(for: trainings)
+        self.dailySteps    = await hk.steps(on: day)
+        self.dailySleepMin = await hk.sleepMinutes(on: day)
+        self.dailyProteinG = await hk.dietaryProteinGrams(on: day)
+        self.dailyBodyMassKg = await hk.bodyMass(on: day)
 
     }
 

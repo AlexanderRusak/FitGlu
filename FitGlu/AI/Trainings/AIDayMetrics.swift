@@ -24,8 +24,15 @@ struct AIDayMetrics: Codable {
     struct Context: Codable {
         let hrMax: Int
         let hrRest: Int?
-        /// Диапазоны зон (bpm). Ключи: "Recovery","Fat","Trans","Ana","Stress"
         let zonesBPM: [String: ClosedRange<Int>]
+
+        // NEW (опционально, если нет разрешений/данных)
+        let steps: Int?
+        let sleepMin: Int?
+        let proteinG: Double?
+        let age: Int?
+        let sex: String?
+        let bodyMassKg: Double? 
     }
 
     let dateISO: String             // YYYY-MM-DD

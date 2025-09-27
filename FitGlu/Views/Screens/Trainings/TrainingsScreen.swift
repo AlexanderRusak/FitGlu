@@ -4,8 +4,10 @@ import SwiftUI
 struct TrainingsScreen: View {
 
     // MARK: – UI State
-    @State private var selectedDate     = Date()
-    @State private var showPicker       = true
+    @State private var selectedDate = Date()
+    @State private var rangeStart: Date? = nil
+    @State private var rangeEnd: Date?   = nil
+
     @State private var isLoading        = false
     /// OFF — индивидуальные из БД, ON — «220 − возраст»
     @State private var useStandardZones = false
@@ -41,8 +43,17 @@ struct TrainingsScreen: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    headerView
-                    if showPicker { datePickerView }
+
+                    // ⬇️ НОВЫЙ УМНЫЙ КАЛЕНДАРЬ (день/диапазон + пресеты)
+                    DateSmartHeader(
+                        selectedDate: $selectedDate,
+                        rangeStart: $rangeStart,
+                        rangeEnd: $rangeEnd,
+                        supportsRange: true
+                    )
+                    .onChange(of: selectedDate) { _, _ in Task { await loadData() } }
+                    .onChange(of: rangeStart)   { _, _ in Task { await loadData() } }
+                    .onChange(of: rangeEnd)     { _, _ in Task { await loadData() } }
 
                     zoneModeToggle
                     if let t = activeThresholds { ZonesBarView(thresholds: t) }
@@ -52,11 +63,11 @@ struct TrainingsScreen: View {
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.vertical, 24)
                     } else if qualities.isEmpty {
-                        Text("No trainings for the selected day.")
+                        Text(rangeStart != nil && rangeEnd != nil ? "No trainings for the selected period." : "No trainings for the selected day.")
                             .foregroundStyle(.secondary)
                     } else {
-                        // Средний балл дня (ZBS)
-                        let avgScore = qualities.map(\.zoneBalanceScore).reduce(0, +) / Double(qualities.count)
+                        // Средний балл (по треням)
+                        let avgScore = qualities.map(\.zoneBalanceScore).reduce(0, +) / Double(max(1, qualities.count))
 
                         MetricAccordion(
                             title: "Zone Balance",
@@ -65,13 +76,13 @@ struct TrainingsScreen: View {
                             },
                             collapsedBar: { ZBSCompactBar(score: avgScore) },
                             content: { TrainingQualityList(qualities: qualities) },
-                            onInfoTap: { showZBSInfo = true }          // ← это рисует и активирует «i»
+                            onInfoTap: { showZBSInfo = true }
                         )
                         .environment(\.initialExpanded, false)
                         .sheet(isPresented: $showZBSInfo) { ZBSInfoSheet() }
                         .padding(.vertical, 4)
 
-                        // Новая метрика — Intensity & Peaks
+                        // Интенсивность
                         MetricAccordion(
                             title: "Intensity & Peaks",
                             summary: { showChips in INTSummary(day: intensityDay, showChips: showChips) },
@@ -83,6 +94,7 @@ struct TrainingsScreen: View {
                         .sheet(isPresented: $showINTInfo) { INTInfoSheet() }
                         .padding(.vertical, 4)
                         
+                        // Энергия
                         MetricAccordion(
                             title: "Energy Efficiency",
                             summary: { showChips in
@@ -98,7 +110,7 @@ struct TrainingsScreen: View {
                         )
                         .environment(\.initialExpanded, false)
                         .padding(.vertical, 4)
-                        .sheet(isPresented: $showENEInfo) { ENEInfoSheet() } // ↓ см. ниже
+                        .sheet(isPresented: $showENEInfo) { ENEInfoSheet() }
                     }
                 }
                 .padding()
@@ -107,17 +119,17 @@ struct TrainingsScreen: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        Task { await aiAnalyzeDay() }   // было aiPing()
+                        Task { await aiAnalyzeDay() }
                     } label: {
                         Label("Ask AI", systemImage: "sparkles")
                     }
                     .disabled(aiBusy)
                 }
             }
-            .sheet(isPresented: $showAIInfo) {   // NEW
+            .sheet(isPresented: $showAIInfo) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("AI анализ дня")
+                        Text("AI анализ")
                             .font(.headline)
                         Text(aiInfoText)
                             .font(.body)
@@ -147,30 +159,12 @@ struct TrainingsScreen: View {
 
 // MARK: – UI sub-views
 extension TrainingsScreen {
-
-    var headerView: some View {
-        HStack {
-            Text(selectedDate, format: .dateTime.month(.wide).year())
-                .font(.title3).bold()
-            Spacer()
-            Button(showPicker ? "Hide calendar" : "Show calendar") {
-                withAnimation { showPicker.toggle() }
-            }
-        }
-    }
-
-    var datePickerView: some View {
-        DatePicker("Pick a date", selection: $selectedDate, displayedComponents: .date)
-            .datePickerStyle(.graphical)
-            .onChange(of: selectedDate) { _, _ in Task { await loadData() } }
-    }
-
     var zoneModeToggle: some View {
         Toggle(isOn: $useStandardZones) {
             Label("Standard zones (220 − age)", systemImage: "heart.text.square")
         }
         .toggleStyle(.switch)
-        .onChange(of: useStandardZones) { _, _ in Task { await computeQuality() } }
+        .onChange(of: useStandardZones) { _, _ in Task { await loadData(force: true) } }
     }
 }
 
@@ -178,20 +172,143 @@ extension TrainingsScreen {
 extension TrainingsScreen {
 
     @MainActor
-    func loadData(force: Bool = false) async {
-        guard !isLoading || force else { return }
-        isLoading = true
-        defer { isLoading = false }
+      func loadData(force: Bool = false) async {
+          guard !isLoading || force else { return }
+          isLoading = true
+          defer { isLoading = false }
 
-        // очистим предыдущее
-        qualities = []
-        intensityList = []
-        intensityDay = DayIntensity(peakHRPercent: 0, timeAbove90: 0, sawRedZone: false, hrRPE10: 0)
-        dayTotals = .init()
+          resetMetrics()
 
-        await detailsVM.load(for: selectedDate)   // тренировки / HR / глюкоза
-        await computeQuality()
-    }
+          if let rs = rangeStart, let re = rangeEnd, rs <= re {
+              await loadRangeData(from: rs, to: re)
+          } else {
+              await detailsVM.load(for: selectedDate)   // тренировки / HR / глюкоза / шаги/сон/белок/вес
+              await computeQuality()
+          }
+      }
+
+      private func resetMetrics() {
+          qualities = []
+          intensityList = []
+          intensityDay = DayIntensity(peakHRPercent: 0, timeAbove90: 0, sawRedZone: false, hrRPE10: 0)
+          dayTotals = .init()
+          eneList = []
+          eneDay  = EnergyDayEfficiency(totalKcal: 0, totalStressSec: 0, kcalPerStressMin: 0)
+      }
+
+      /// Диапазон: вызываем дневную загрузку по каждому дню и агрегируем
+      @MainActor
+      private func loadRangeData(from start: Date, to end: Date) async {
+          activeThresholds = currentThresholds()
+          let thresholds = activeThresholds ?? DefaultZonesProvider.estimate(age: detailsVM.userAge ?? 30)
+          let analyzer = DailyAnalyzer(thresholds: thresholds)
+
+          var aggTotals = TimeInZone()
+          var aggIntDur: TimeInterval = 0
+          var aggIntWeightedAvgHR: Double = 0
+          var aggIntWeightedRPE: Double = 0
+          var aggPeakHR = 0
+          var aggPeakPct: Double = 0
+          var aggSawRed = false
+
+          var sumKcal: Double = 0
+          var sumStressSec: Double = 0
+
+          var day = Calendar.current.startOfDay(for: start)
+          let endDay = Calendar.current.startOfDay(for: end)
+
+          while day <= endDay {
+              await detailsVM.load(for: day)
+
+              // 1) дневные качества
+              let dayQual = analyzer.analyzeDay(
+                  trainings: detailsVM.trainings,
+                  hrSegments: detailsVM.hrSegments
+              )
+              qualities.append(contentsOf: dayQual)
+
+              // 2) HRmax/HRrest на день
+              let hrRest: Int = DailyAnalyzer.estimateHRRestSmart(from: detailsVM.hrDailyPoints)
+              let hrMaxUsed: Int = {
+                  if useStandardZones {
+                      let age = detailsVM.userAge ?? 30
+                      return min(230, max(160, 220 - age))
+                  } else {
+                      return HRMaxDBManager.shared.valueOrDefault(age: detailsVM.userAge)
+                  }
+              }()
+
+              // 3) интенсивность
+              let list: [TrainingIntensity] = analyzer.intensityForTrainings(
+                  trainings: detailsVM.trainings,
+                  hrSegments: detailsVM.hrSegments,
+                  hrMax: hrMaxUsed,
+                  hrRest: hrRest
+              )
+              intensityList.append(contentsOf: list)
+
+              let dayInt: DayIntensity = analyzer.intensityForDay(
+                  trainings: detailsVM.trainings,
+                  hrSegments: detailsVM.hrSegments,
+                  hrMax: hrMaxUsed,
+                  hrRest: hrRest
+              )
+
+              // totals по зонам
+              let dayTotalsLocal = dayQual.reduce(TimeInZone()) { acc, q in
+                  var t = acc; let m = q.tiz
+                  t.rec += m.rec; t.fat += m.fat; t.tran += m.tran
+                  t.ana += m.ana; t.stress += m.stress; return t
+              }
+              aggTotals.rec    += dayTotalsLocal.rec
+              aggTotals.fat    += dayTotalsLocal.fat
+              aggTotals.tran   += dayTotalsLocal.tran
+              aggTotals.ana    += dayTotalsLocal.ana
+              aggTotals.stress += dayTotalsLocal.stress
+
+              // интенсивность (взвешенно)
+              let dayRPE10: Double = Double(dayInt.hrRPE10)
+              let dayPeakPct: Double = dayInt.peakHRPercent
+              let dayMinutesAt90: Double = dayInt.timeAbove90
+              let daySawRed: Bool = dayInt.sawRedZone
+              // saw red
+              aggIntWeightedRPE = dayRPE10          // это уже дневной, взвешенный
+              aggPeakPct        = dayPeakPct
+              aggSawRed         = aggSawRed || daySawRed
+
+              // Энергия
+              let eneProvider: (TrainingRow) -> Double? = { tr in detailsVM.energyByTraining[tr.id] }
+              let eneD = analyzer.energyEfficiencyForDay(
+                  trainings: detailsVM.trainings,
+                  hrSegments: detailsVM.hrSegments,
+                  kcalProvider: eneProvider
+              )
+              sumKcal += eneD.totalKcal
+              sumStressSec += eneD.totalStressSec
+
+              day = Calendar.current.date(byAdding: .day, value: 1, to: day)!
+          }
+
+          // применяем агрегаты
+          self.dayTotals = aggTotals
+
+          let avgHR = aggIntDur > 0 ? Int(round(aggIntWeightedAvgHR / aggIntDur)) : 0
+          let rpeW  = aggIntDur > 0 ? (aggIntWeightedRPE / aggIntDur) : 0
+
+          self.intensityDay = DayIntensity(
+              peakHRPercent: aggPeakPct,
+              timeAbove90: 0,
+              sawRedZone: aggSawRed,
+              hrRPE10: Int(round(rpeW))
+          )
+
+          let eff = sumStressSec > 0 ? (sumKcal / (sumStressSec / 60.0)) : 0
+          self.eneDay = EnergyDayEfficiency(
+              totalKcal: sumKcal,
+              totalStressSec: sumStressSec,
+              kcalPerStressMin: eff
+          )
+      }
 
     @MainActor
     func computeQuality() async {

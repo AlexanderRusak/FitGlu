@@ -60,3 +60,23 @@ public struct DayIntensity {
     public let hrRPE10: Int
     public static let zero = DayIntensity(peakHRPercent: 0, timeAbove90: 0, sawRedZone: false, hrRPE10: 0)
 }
+
+extension TrainingIntensity {
+    init(from m: IntensityTrainingMetrics,
+         timeAt90: TimeInterval = 0,
+         sawRed: Bool = false)
+    {
+        self.init(
+            id:            m.id,
+            training:      m.training,
+            peakHRPercent: m.peakPercent,
+            timeAbove90:   timeAt90,
+            sawRedZone:    sawRed,
+            hrRPE10:       Int(m.rpeIndex.rounded()),
+            avgHR:         m.avgHR,
+            duration:      m.duration
+        )
+    }
+}
+
+

@@ -118,23 +118,26 @@ extension TrainingsScreen {
     @MainActor
     func loadRangeData(from start: Date, to end: Date) async {
         activeThresholds = currentThresholds()
+        zoneChartData = []
         let thresholds = activeThresholds ?? DefaultZonesProvider.estimate(age: detailsVM.userAge ?? 30)
         let analyzer = DailyAnalyzer(thresholds: thresholds)
 
         var aggTotals = TimeInZone()
 
-        // Интенсивность — собираем корректные агрегаты за период
-        var aggDur: TimeInterval   = 0          // Σ длительностей (сек)
-        var sumHRdt: Double        = 0          // Σ(avgHR * dur)
-        var sumRPEdt: Double       = 0          // Σ(rpeIndex * dur)
-        var aggPeakHR: Int         = 0          // max по дню
-        var aggPeakPct: Double     = 0          // max по дню
-        var aggTimeAt90: Double    = 0          // Σ секунд ≥90% HR
-        var aggSawRed: Bool        = false      // OR по всем дням
+        // Интенсивность — корректные агрегаты за период
+        var aggDur: TimeInterval = 0
+        var sumHRdt: Double = 0
+        var sumRPEdt: Double = 0
+        var aggPeakPct: Double = 0
+        var aggTimeAt90: Double = 0
+        var aggSawRed = false
 
         // Энергия
-        var sumKcal: Double        = 0
-        var sumStressSec: Double   = 0
+        var sumKcal: Double = 0
+        var sumStressSec: Double = 0
+
+        // Данные для графика
+        var points: [ZoneDayPoint] = []
 
         var day = Calendar.current.startOfDay(for: start)
         let endDay = Calendar.current.startOfDay(for: end)
@@ -142,7 +145,7 @@ extension TrainingsScreen {
         while day <= endDay {
             await detailsVM.load(for: day)
 
-            // 1) Качество зон — добавляем все тренировки дня
+            // 1) Качество зон за день
             let dayQual = analyzer.analyzeDay(
                 trainings: detailsVM.trainings,
                 hrSegments: detailsVM.hrSegments
@@ -160,65 +163,59 @@ extension TrainingsScreen {
                 }
             }()
 
-            // 3) Интенсивность ПО ТРЕНИРОВКАМ (берём метрики с duration/avg/peak/rpe)
+            // 3) Интенсивность по тренировкам
             let list: [IntensityTrainingMetrics] = analyzer.intensityForTrainings(
                 trainings: detailsVM.trainings,
                 hrSegments: detailsVM.hrSegments,
                 hrMax: hrMaxUsed,
                 hrRest: hrRest
             )
-            intensityList.append(contentsOf: list.map { TrainingIntensity(from: $0) })
 
-            // День → агрегаты
-            let dayDur       = list.reduce(0.0) { $0 + $1.duration }
-            let daySumHRdt   = list.reduce(0.0) { $0 + Double($1.avgHR)   * $1.duration }
-            let daySumRPEdt  = list.reduce(0.0) { $0 + $1.rpeIndex        * $1.duration }
-            let dayPeakHR    = list.map(\.peakHR).max() ?? 0
-            let dayPeakPct   = list.map(\.peakPercent).max() ?? 0
+            // Пересчёт агрегатов дня
+            let dayDur      = list.reduce(0.0) { $0 + $1.duration }
+            let dayHRdt     = list.reduce(0.0) { $0 + Double($1.avgHR) * $1.duration }
+            let dayRPEdt    = list.reduce(0.0) { $0 + $1.rpeIndex * $1.duration }
+            let dayPeakPct  = list.map(\.peakPercent).max() ?? 0
 
             aggDur   += dayDur
-            sumHRdt  += daySumHRdt
-            sumRPEdt += daySumRPEdt
-            aggPeakHR = max(aggPeakHR, dayPeakHR)
+            sumHRdt  += dayHRdt
+            sumRPEdt += dayRPEdt
             aggPeakPct = max(aggPeakPct, dayPeakPct)
 
-            // ≥90% HR и красная зона — берём из дневной сводки
-            let dayInt = analyzer.intensityForDay(
-                trainings: detailsVM.trainings,
-                hrSegments: detailsVM.hrSegments,
-                hrMax: hrMaxUsed,
-                hrRest: hrRest
-            )
-            let dayIntRaw: IntensityDayMetrics = analyzer.intensityForDay(
-                trainings: detailsVM.trainings,
-                hrSegments: detailsVM.hrSegments,
-                hrMax: hrMaxUsed,
-                hrRest: hrRest
-            )
-
-            // секунды ≥90% HR считаем по сегментам
+            // ≥90% HR и «красная зона»
             let dayTimeAt90 = evidenceSecondsAt90(
                 segments: detailsVM.hrSegments,
                 thresholds: thresholds,
                 hrMax: hrMaxUsed
             )
+            aggTimeAt90 += dayTimeAt90
 
-            // sawRed — был ли вход в красную зону (граница Z5.low)
-            let redLowerBPM = thresholds.z5[0]    // если у тебя z5 = [low, high] в bpm
+            // sawRed (вход в Z5 хоть раз)
+            let redLowerBPM = thresholds.z5.first ?? 0
             let daySawRed = detailsVM.hrSegments.contains { seg in
                 seg.contains { $0.bpm >= redLowerBPM }
             }
+            aggSawRed = aggSawRed || daySawRed
 
-            // агрегаты
-            aggTimeAt90 += dayTimeAt90
-            aggSawRed   = aggSawRed || daySawRed
-
-            // 4) Totals по зонам за день → в период
+            // 4) Totals по зонам → точка для графика
             let dayTotalsLocal = dayQual.reduce(TimeInZone()) { acc, q in
                 var t = acc; let m = q.tiz
                 t.rec += m.rec; t.fat += m.fat; t.tran += m.tran
                 t.ana += m.ana; t.stress += m.stress; return t
             }
+            
+            zoneChartData.append(
+                ZoneDayPoint(
+                    date: day,
+                    rec: Double(dayTotalsLocal.rec.minutesRounded),
+                    fat: Double(dayTotalsLocal.fat.minutesRounded),
+                    tran: Double(dayTotalsLocal.tran.minutesRounded),
+                    ana: Double(dayTotalsLocal.ana.minutesRounded),
+                    stress: Double(dayTotalsLocal.stress.minutesRounded)
+                )
+            )
+
+            // копим общий totals периода
             aggTotals.rec    += dayTotalsLocal.rec
             aggTotals.fat    += dayTotalsLocal.fat
             aggTotals.tran   += dayTotalsLocal.tran
@@ -237,18 +234,16 @@ extension TrainingsScreen {
 
             day = Calendar.current.date(byAdding: .day, value: 1, to: day)!
         }
-
-        // ——— Применяем агрегаты по периоду ———
+        zoneChartData.sort { $0.date < $1.date }
+        // Применяем агрегаты
         self.dayTotals = aggTotals
-
-        let avgHR = aggDur > 0 ? Int(round(sumHRdt / aggDur)) : 0
-        let rpeW  = aggDur > 0 ? (sumRPEdt / aggDur) : 0
+        let rpeWeighted = aggDur > 0 ? (sumRPEdt / aggDur) : 0
 
         self.intensityDay = DayIntensity(
-            peakHRPercent: aggPeakPct,         // пик в % от HRmax — берём максимальный за период
-            timeAbove90:   aggTimeAt90,        // суммарные секунды ≥90% HR за период
-            sawRedZone:    aggSawRed,          // был ли хоть раз
-            hrRPE10:       Int(round(rpeW))    // взвешенное по длительности среднее RPE 0–10
+            peakHRPercent: aggPeakPct,
+            timeAbove90:   aggTimeAt90,
+            sawRedZone:    aggSawRed,
+            hrRPE10:       Int(round(rpeWeighted))
         )
 
         let eff = sumStressSec > 0 ? (sumKcal / (sumStressSec / 60.0)) : 0
@@ -257,9 +252,6 @@ extension TrainingsScreen {
             totalStressSec:  sumStressSec,
             kcalPerStressMin: eff
         )
-
-        // avgHR посчитан выше (если нужен в UI — сохрани куда надо)
-        _ = avgHR
     }
 
 
@@ -269,6 +261,7 @@ extension TrainingsScreen {
         intensityDay = DayIntensity(peakHRPercent: 0, timeAbove90: 0, sawRedZone: false, hrRPE10: 0)
         dayTotals = .init()
         eneList = []
+        zoneChartData = []
         eneDay  = EnergyDayEfficiency(totalKcal: 0, totalStressSec: 0, kcalPerStressMin: 0)
     }
 

@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 /// Корневой экран вкладки «Trainings».
 struct TrainingsScreen: View {
@@ -16,6 +17,11 @@ struct TrainingsScreen: View {
     // MARK: – Data
     @StateObject var detailsVM = DetailsViewModel()
     @State var qualities: [TrainingQuality]      = []
+    @State var zoneChartData: [ZoneDayPoint] = []
+    @State var chartMode: ZonesChartMode = .minutes
+    @State var chartShowLegend: Bool = true
+    @State var chartShowLabels: Bool = true
+    @State var chartShowAvgBand: Bool = true
     @State var activeThresholds: ZoneThresholds? = nil
     @State var showZBSInfo = false
     @State var showINTInfo = false
@@ -38,6 +44,36 @@ struct TrainingsScreen: View {
     @State var showAIInfo = false
     @State var aiInfoText = "—"
     let ai = ChatGPTProvider()
+    
+    private var periodInfo: PeriodHeaderView.Info? {
+        guard let s = rangeStart, let e = rangeEnd, !zoneChartData.isEmpty else { return nil }
+        let days = Set(zoneChartData.map { Calendar.current.startOfDay(for: $0.date) }).count
+        let totalMin = Int(zoneChartData.reduce(0) { $0 + $1.total }.rounded())
+        let avgPerDay = days > 0 ? Int((Double(totalMin)/Double(days)).rounded()) : totalMin
+        let workouts = qualities.count // у тебя TrainingQuality на тренировку
+        let kcal = Int(eneDay.totalKcal.rounded())
+        // ZBS среднее по тренировкам, если хочется
+        let avgZBS = qualities.isEmpty
+            ? nil
+            : Int((qualities.map(\.zoneBalanceScore).reduce(0,+) / Double(qualities.count)).rounded())
+        return .init(start: s, end: e, daysCount: days, workoutsCount: workouts,
+                     totalMinutes: totalMin, avgPerDay: avgPerDay, avgZBS: avgZBS, kcal: kcal)
+    }
+    
+    private var isRangeMode: Bool {
+        if let s = rangeStart, let e = rangeEnd {
+            return Calendar.current.startOfDay(for: s) < Calendar.current.startOfDay(for: e)
+        }
+        return false
+    }
+    
+    private var chartPointsForUI: [ZoneDayPoint] {
+        guard isRangeMode else { return [] }
+        switch chartMode {
+        case .minutes: return zoneChartData
+        case .percent: return zoneChartData.map { $0.asPercent() }
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -62,7 +98,45 @@ struct TrainingsScreen: View {
                         ProgressView("Loading…")
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.vertical, 24)
-                    } else if qualities.isEmpty {
+                    }
+                    else if isRangeMode {
+                        if let info = periodInfo {
+                            PeriodHeaderView(info: info)
+                        }
+                        Picker("", selection: $chartMode) {
+                            Text("Minutes").tag(ZonesChartMode.minutes)
+                            Text("Percent").tag(ZonesChartMode.percent)
+                        }
+                        .pickerStyle(.segmented)
+                        
+                        HStack(spacing: 12) {
+                            Toggle("Legend", isOn: $chartShowLegend)
+                                .toggleStyle(.switch).font(.caption)
+                            Toggle("Labels", isOn: $chartShowLabels)
+                                .toggleStyle(.switch).font(.caption)
+                            Toggle("Avg band", isOn: $chartShowAvgBand)
+                                .toggleStyle(.switch).font(.caption)
+                                .disabled(chartMode == .percent) // в процентах нет среднего
+                                .opacity(chartMode == .percent ? 0.5 : 1)
+                        }
+                        .padding(.top, 4)
+
+                        if zoneChartData.isEmpty {
+                            Text("No trainings for the selected period.")
+                                .foregroundStyle(.secondary)
+                        } else {
+                            ZonesStackedChart(
+                                data: zoneChartData,
+                                mode: chartMode,
+                                showLegend: true,
+                                showValueLabels: true,
+                                showPeriodSummary: true
+                            )
+                            .frame(height: 260)
+                            .padding(.vertical, 8)
+                        }
+                    }
+                    else if qualities.isEmpty {
                         Text(rangeStart != nil && rangeEnd != nil ? "No trainings for the selected period." : "No trainings for the selected day.")
                             .foregroundStyle(.secondary)
                     } else {

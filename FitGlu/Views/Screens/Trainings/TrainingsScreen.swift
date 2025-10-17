@@ -100,41 +100,18 @@ struct TrainingsScreen: View {
                             .padding(.vertical, 24)
                     }
                     else if isRangeMode {
-                        if let info = periodInfo {
-                            PeriodHeaderView(info: info)
-                        }
-                        Picker("", selection: $chartMode) {
-                            Text("Minutes").tag(ZonesChartMode.minutes)
-                            Text("Percent").tag(ZonesChartMode.percent)
-                        }
-                        .pickerStyle(.segmented)
-                        
-                        HStack(spacing: 12) {
-                            Toggle("Legend", isOn: $chartShowLegend)
-                                .toggleStyle(.switch).font(.caption)
-                            Toggle("Labels", isOn: $chartShowLabels)
-                                .toggleStyle(.switch).font(.caption)
-                            Toggle("Avg band", isOn: $chartShowAvgBand)
-                                .toggleStyle(.switch).font(.caption)
-                                .disabled(chartMode == .percent) // в процентах нет среднего
-                                .opacity(chartMode == .percent ? 0.5 : 1)
-                        }
-                        .padding(.top, 4)
-
-                        if zoneChartData.isEmpty {
-                            Text("No trainings for the selected period.")
-                                .foregroundStyle(.secondary)
-                        } else {
-                            ZonesStackedChart(
-                                data: zoneChartData,
-                                mode: chartMode,
-                                showLegend: true,
-                                showValueLabels: true,
-                                showPeriodSummary: true
-                            )
-                            .frame(height: 260)
-                            .padding(.vertical, 8)
-                        }
+                        ZonesStackedChart(
+                            data: zoneChartData.map { ZoneDayPoint(date: $0.date,
+                                                                   rec: $0.rec,
+                                                                   fat: $0.fat,
+                                                                   tran: $0.tran,
+                                                                   ana: $0.ana,
+                                                                   stress: $0.stress) },
+                            mode: chartMode, // .minutes / .percent
+                            showLegend: true,
+                            showValueLabels: true,
+                            showPeriodSummary: true
+                        )
                     }
                     else if qualities.isEmpty {
                         Text(rangeStart != nil && rangeEnd != nil ? "No trainings for the selected period." : "No trainings for the selected day.")
@@ -192,12 +169,21 @@ struct TrainingsScreen: View {
             .navigationTitle("🏋️ Trainings")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Task { await aiAnalyzeDay() }
-                    } label: {
-                        Label("Ask AI", systemImage: "sparkles")
+                    if isRangeMode {
+                        Button {
+                            Task { await aiAnalyzePeriod() }
+                        } label: {
+                            Label("Ask AI", systemImage: "sparkles")
+                        }
+                        .disabled(aiBusy)
+                    } else {
+                        Button {
+                            Task { await aiAnalyzeDay() }   // твой дневной анализ уже был
+                        } label: {
+                            Label("Ask AI", systemImage: "sparkles")
+                        }
+                        .disabled(aiBusy)
                     }
-                    .disabled(aiBusy)
                 }
             }
             .sheet(isPresented: $showAIInfo) {

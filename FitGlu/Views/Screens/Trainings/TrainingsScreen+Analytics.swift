@@ -292,3 +292,83 @@ extension TrainingsScreen {
         return max(0, sec)
     }
 }
+
+extension TrainingsScreen {
+    @MainActor
+    func buildAIPeriodMetrics() -> AIPeriodMetrics? {
+        guard let rs = rangeStart, let re = rangeEnd, rs <= re else { return nil }
+
+        // 1) Totals периода (у нас в self.dayTotals)
+        let tz = self.dayTotals
+        let totals = AIPeriodMetrics.Totals(
+            recMin: tz.rec.minutesRounded,
+            fatMin: tz.fat.minutesRounded,
+            tranMin: tz.tran.minutesRounded,
+            anaMin: tz.ana.minutesRounded,
+            stressMin: tz.stress.minutesRounded
+        )
+
+        // 2) Пер-дневные точки (для графика и для AI)
+        // Если уже держишь zoneChartData (date + rec/fat/... в минутах) — используем его.
+        let perDay: [AIPeriodMetrics.DayZBS] = zoneChartData.map { p in
+            .init(
+                dateISO: p.date.isoDate,
+                zbsScore: nil, // при желании можно посчитать средний ZBS по дню из qualities
+                recMin: Int(p.rec.rounded()),
+                fatMin: Int(p.fat.rounded()),
+                tranMin: Int(p.tran.rounded()),
+                anaMin: Int(p.ana.rounded()),
+                stressMin: Int(p.stress.rounded())
+            )
+        }
+
+        // 3) Интенсивность за период
+        let intn = AIPeriodMetrics.Intensity(
+            avgRPE10: intensityDay.hrRPE10,
+            peakHRPercent: Int(intensityDay.peakHRPercent.rounded()),
+            timeAt90plusMin: Int((intensityDay.timeAbove90 / 60.0).rounded()),
+            sawRedAny: intensityDay.sawRedZone
+        )
+
+        // 4) Энергия (у нас eneDay — это итог за период)
+        let energy = AIPeriodMetrics.Energy(
+            totalKcal: Int(eneDay.totalKcal.rounded()),
+            stressMinutes: Int((eneDay.totalStressSec / 60.0).rounded()),
+            kcalPerStressMin: eneDay.kcalPerStressMin == 0 ? nil : eneDay.kcalPerStressMin
+        )
+
+        // 5) Средний ZBS за период (если хочешь)
+        let avgZBS: Int? = {
+            guard !qualities.isEmpty else { return nil }
+            let avg = qualities.map(\.zoneBalanceScore).reduce(0, +) / Double(qualities.count)
+            return Int(avg.rounded())
+        }()
+
+        // 6) Контекст
+        let ctx: AIPeriodMetrics.Context? = {
+            guard let t = activeThresholds else { return nil }
+            return .init(
+                hrMax: computedHRMax,
+                hrRest: computedHRRest,
+                zonesBPM: t.asBPMDictionary(),
+                age: detailsVM.userAge,
+                sex: detailsVM.userSex?.stringValue,
+                bodyMassKg: detailsVM.dailyBodyMassKg
+            )
+        }()
+
+        let label = "\(rs.isoDate)–\(re.isoDate)"
+
+        return .init(
+            periodLabel: label,
+            daysCount: max(1, Calendar.current.dateComponents([.day], from: rs.startOfDay, to: re.startOfDay).day! + 1),
+            mode: (/* текущая вкладка графика */ "minutes"),
+            totals: totals,
+            perDay: Array(perDay.prefix(21)),  // ограничим, чтобы не раздувать промпт
+            intensity: intn,
+            energy: energy,
+            avgZBS: avgZBS,
+            context: ctx
+        )
+    }
+}

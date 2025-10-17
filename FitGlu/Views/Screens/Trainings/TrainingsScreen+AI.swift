@@ -244,4 +244,79 @@ extension TrainingsScreen {
         if let p  = c.proteinG,  p  > 0 { parts.append("белок \(Int(p.rounded())) г") }
         return parts.isEmpty ? "" : "\nДоп. контекст: " + parts.joined(separator: ", ") + "."
     }
+    
+    func makePeriodPrompt(_ m: AIPeriodMetrics) -> String {
+        // Сверстаем короткую сводку для LLM
+        let totals = m.totals
+        let linesPerDay = m.perDay.map { d in
+            "• \(d.dateISO): rec \(d.recMin), fat \(d.fatMin), tran \(d.tranMin), ana \(d.anaMin), stress \(d.stressMin) (tot \(d.totalMin))"
+        }.joined(separator: "\n")
+
+        let zbsLine = m.avgZBS.map { "Средний ZBS по дням: \($0)/100." } ?? ""
+
+        let ctxLine: String = {
+            guard let c = m.context else { return "" }
+            var parts: [String] = []
+            if let h = c.hrMax  { parts.append("HRmax \(h)") }
+            if let r = c.hrRest { parts.append("HRrest \(r)") }
+            if let a = c.age    { parts.append("возраст \(a)") }
+            if let s = c.sex    { parts.append("пол \(s)") }
+            if let w = c.bodyMassKg { parts.append("вес \(Int(w.rounded())) кг") }
+            return parts.isEmpty ? "" : "Контекст: " + parts.joined(separator: ", ") + "."
+        }()
+
+        let txt =
+        """
+        Ты — строгий и поддерживающий эксперт по фитнесу и композиции тела. Проанализируй период \(m.periodLabel) (\(m.daysCount) дн.). Пиши по-русски, кратко и по делу.
+
+        [Итоги периода]
+        • Суммарно по зонам (мин): Rec \(totals.recMin), Fat \(totals.fatMin), Trans \(totals.tranMin), Ana \(totals.anaMin), Stress \(totals.stressMin). Всего \(totals.totalMin) мин.
+        • Доли: Rec \(totals.pct(totals.recMin))%, Fat \(totals.pct(totals.fatMin))%, Trans \(totals.pct(totals.tranMin))%, Ana \(totals.pct(totals.anaMin))%, Stress \(totals.pct(totals.stressMin))%.
+        • Интенсивность: средний RPE \(m.intensity.avgRPE10)/10; пик \(m.intensity.peakHRPercent)% HRmax; ≥90% HR \(m.intensity.timeAt90plusMin) мин; красная зона: \(m.intensity.sawRedAny ? "была" : "не было").
+        • Энергия: \(m.energy.totalKcal) ккал; стресс \(m.energy.stressMinutes) мин; ккал/стресс-мин \(m.energy.kcalPerStressMin.map { String(format: "%.1f", $0) } ?? "—").
+        \(zbsLine)
+        \(ctxLine)
+
+        [По дням]
+        \(linesPerDay)
+
+        [Задача]
+        1) Короткий вывод: где прогресс, где перегруз (по зонам/интенсивности/стрессу).
+        2) Конкретный план на следующий период (1–3 пункта): целевые зоны/объём/интенсивность/шаги; если нужно — про восстановление/сон/питание.
+        3) Если видишь перекос (например, слишком много stress/ana или мало fat), дай точечные корректировки.
+        4) Заверши одной мотивирующей фразой тренера.
+
+        Избегай воды и общих фраз; ориентируйся на цель «выглядеть лучше без вреда».
+        """
+        return txt
+    }
+    
+    @MainActor
+    func aiAnalyzePeriod() async {
+        guard let payload = buildAIPeriodMetrics() else {
+            aiInfoText = "Не выбран корректный период."
+            showAIInfo = true
+            return
+        }
+
+        aiBusy = true
+        defer { aiBusy = false }
+
+        let prompt = makePeriodPrompt(payload)
+
+        do {
+            let reply: String = try await ai.send(
+                messages: [
+                    .init(role: .system, content: "Ты краткий, точный и мотивирующий спортивный врач-аналитик."),
+                    .init(role: .user,   content: prompt)
+                ],
+                temperature: 0.4
+            )
+            aiInfoText = reply.trimmingCharacters(in: .whitespacesAndNewlines)
+        } catch {
+            aiInfoText = "Ошибка: \(error.localizedDescription)"
+        }
+        showAIInfo = true
+    }
 }
+

@@ -3,6 +3,8 @@ import SwiftUI
 struct MainTabView: View {
     var body: some View {
         TabView {
+            DailyCoachScreen()
+                            .tabItem { Label("Today", systemImage: "target") }
             TrainingsScreen()
                 .tabItem {
                     Label("Trainings", systemImage: "figure.walk")
@@ -18,10 +20,10 @@ struct MainTabView: View {
                     Label("Details", systemImage: "chart.bar")
                 }*/
 
-            AllGlucoseScreen()
-                .tabItem {
-                    Label("All Glucose", systemImage: "drop")
-                }
+//            AllGlucoseScreen()
+//                .tabItem {
+//                    Label("All Glucose", systemImage: "drop")
+//                }
         }
     }
 }

@@ -19,8 +19,13 @@ extension ZonesStackedChart {
             var items: [Slice] = []
             func push(_ kind: ZoneKind, _ value: Double) {
                 guard value > 0 else { return }
-                let s = Slice(day: point.date, kind: kind,
-                              yStart: cursor, yEnd: cursor + value, value: value)
+                let s = Slice(
+                    day: Calendar.current.startOfDay(for: point.date),
+                    kind: kind,
+                    yStart: cursor,
+                    yEnd: cursor + value,
+                    value: value
+                )
                 cursor += value
                 items.append(s)
             }
@@ -39,7 +44,7 @@ extension ZonesStackedChart {
         let date: Date
         let total: Double
     }
-    var dayTotals: [DayTotal] { data.map { .init(date: $0.date, total: $0.total) } }
+    var dayTotals: [DayTotal] { data.map { .init(date: Calendar.current.startOfDay(for: $0.date), total: $0.total) } }
 
     // Домены осей
     var yMaxMinutes: Double {

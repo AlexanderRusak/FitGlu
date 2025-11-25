@@ -97,6 +97,41 @@ final class DetailsViewModel: ObservableObject {
         self.dailyBodyMassKg = await hk.bodyMass(on: day)
 
     }
+    
+    @MainActor
+    func loadTrainingsRange(days: Int = 30) async {
+        let now = Date()
+        let start = Calendar.current.date(byAdding: .day, value: -days, to: now)!
+        await loadTrainings(in: start ... now)
+    }
+
+    /// Загружает тренировки за конкретный диапазон дат (локальные + HealthKit)
+    @MainActor
+    func loadTrainings(in range: ClosedRange<Date>) async {
+        print("📆 Loading trainings in range \(range.lowerBound.formatted()) → \(range.upperBound.formatted())")
+
+        // 1. Из локальной БД
+        let localT = local.trainings(from: range.lowerBound, to: range.upperBound)
+        print("📦 Local trainings: \(localT.count)")
+
+        // 2. Из HealthKit
+        let hkBundles = (try? await hk.bundles(in: range)) ?? []
+        print("⌚ HK workouts: \(hkBundles.count)")
+
+        // 3. Преобразуем HK в TrainingRow
+        let adapter = HRFlatAdapter(maxGap: 5 * 60)
+        let converted = Self.convert(bundles: hkBundles, adapter: adapter)
+
+        // 4. Объединяем
+        let all = localT + converted.trainings
+        print("💪 Total trainings loaded: \(all.count)")
+
+        // 5. Сохраняем в Published-свойство, чтобы обновить UI
+        self.trainings = all
+
+        // 6. Подгружаем энергию по каждой тренировке
+        self.energyByTraining = await hk.energyByTraining(for: all)
+    }
 
     @MainActor
     func analyzeAndSaveAll() async throws -> Int {
@@ -168,7 +203,8 @@ final class DetailsViewModel: ObservableObject {
                 id: Int64(wk.uuid.hashValue),
                 type: wk.workoutActivityType.workoutName,
                 startTime: wk.startDate.timeIntervalSince1970,
-                endTime: wk.endDate.timeIntervalSince1970
+                endTime: wk.endDate.timeIntervalSince1970,
+                energyKcal: wk.totalEnergyBurned?.doubleValue(for: .kilocalorie())
             ))
 
             let raw = bundle.heartRates
@@ -199,5 +235,53 @@ final class DetailsViewModel: ObservableObject {
             let inside = intervals.contains { $0.contains(s.startDate) }
             return HRPoint(time: s.startDate, bpm: bpm, inWorkout: inside)
         }
+    }
+}
+
+// MARK: - Training helpers
+extension DetailsViewModel {
+
+    /// Последняя (самая поздняя) тренировка из загруженных
+    var lastTraining: TrainingRow? {
+        trainings.max(by: { $0.endTime < $1.endTime })
+    }
+
+    /// Сколько часов прошло с конца последней тренировки
+    func hoursSinceLastTraining(now: Date = Date()) -> Double? {
+        guard let last = lastTraining else { return nil }
+        let deltaSec = now.timeIntervalSince1970 - last.endTime
+        return max(0, deltaSec / 3600.0)
+    }
+
+    /// Была ли тренировка сегодня (по локальной дате)
+    func wasTrainingToday(calendar: Calendar = .current) -> Bool {
+        guard let last = lastTraining else { return false }
+        return calendar.isDateInToday(Date(timeIntervalSince1970: last.endTime))
+    }
+    
+    func lastTrainingQualityScore() -> Int? {
+        guard let last = lastTraining else { return nil }
+
+        // Длительность в минутах
+        let durationMin = max(0, last.endTime - last.startTime) / 60.0
+
+        // Ккал: сначала берём из energyByTraining (из HealthKit),
+        // если там нет — из самого TrainingRow (если у него есть energyKcal)
+        let kcal = energyByTraining[last.id] ?? last.energyKcal ?? 0
+
+        guard durationMin > 0, kcal > 0 else { return nil }
+
+        let kcalPerMin = kcal / durationMin
+
+        // Нормализация:
+        //   3 ккал/мин → 0 баллов
+        //   15 ккал/мин → 100 баллов
+        // (всё ниже 3 прижимаем к 0, выше 15 — к 100)
+        let minRef = 3.0
+        let maxRef = 15.0
+        let clipped = min(max(kcalPerMin, minRef), maxRef)
+        let score = (clipped - minRef) / (maxRef - minRef) * 100.0
+
+        return Int(score.rounded())
     }
 }

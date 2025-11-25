@@ -7,16 +7,32 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "4B4D8B4E-18A8-499F-B97F-A29FD1149D5E"
+            uuid = "FD380CE0-4290-4FB7-9035-9A244608AF77"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Shared/Charts/TrainingPalette.swift"
+            filePath = "Shared/HealthKit/HealthKitAuthorizationManager.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "9"
             endingLineNumber = "9"
-            landmarkName = "color(for:)"
+            landmarkName = "requestAuthorization(completion:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "6E4CE652-B216-4F6F-B7C5-D759E718C1D7"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "FitGlu/ViewModels/DetailsViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "155"
+            endingLineNumber = "155"
+            landmarkName = "analyzeAndSaveAll()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

@@ -1,5 +1,5 @@
 import Foundation
-import SwiftUICore
+import SwiftUI
 
 struct TodayStatBlock: View {
     let title: String

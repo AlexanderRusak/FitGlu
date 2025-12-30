@@ -9,7 +9,10 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Trainings", systemImage: "figure.walk")
                 }
-
+            WorkoutDiaryScreen()
+                .tabItem {
+                    Label("Diary", systemImage: "note.text")
+                }
             ActivityScreen()
                 .tabItem {
                     Label("Activity", systemImage: "chart.bar")

@@ -1,6 +1,6 @@
 // Utils/HRZoneProvider.swift
 import HealthKit
-import SwiftUICore
+import SwiftUI
 
 enum HRZoneProvider {
 

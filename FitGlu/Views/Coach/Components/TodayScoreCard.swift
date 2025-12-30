@@ -1,6 +1,6 @@
 import Foundation
 import SwiftUI
-import SwiftUICore
+import SwiftUI
 struct TodayScoreCard: View {
     @ObservedObject var vm: DailyCoachViewModel
     

@@ -1,6 +1,6 @@
 import Foundation
 import SwiftUI
-import SwiftUICore
+import SwiftUI
 struct RingInfoSheet: View {
     let info: RingInfoType
     let metrics: DailyCoachMetrics

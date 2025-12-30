@@ -68,7 +68,7 @@ struct WorkoutDiaryScreen: View {
                         .frame(maxWidth: .infinity)
                     Spacer()
                 } else {
-                    LazyVStack(spacing: 12) {
+                    List {
                         ForEach(vm.blocks) { block in
                             DiaryBlockCard(
                                 block: block,
@@ -85,8 +85,20 @@ struct WorkoutDiaryScreen: View {
                                     vm.deleteBlock(blockId: block.blockId)
                                 }
                             )
+                            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                            .listRowSeparator(.hidden)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    vm.deleteBlock(blockId: block.blockId)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                         }
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .background(Color(.systemBackground))
                 }
             }
             .padding()

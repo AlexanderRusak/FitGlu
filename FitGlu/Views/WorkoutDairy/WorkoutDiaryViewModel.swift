@@ -19,6 +19,8 @@ final class WorkoutDiaryViewModel: ObservableObject {
 
     private let local   = LocalDBProvider()
     private let manager = WorkoutDiaryDBManager.shared
+    
+    
 
     // MARK: - Init
 
@@ -222,4 +224,19 @@ final class WorkoutDiaryViewModel: ObservableObject {
         manager.deleteBlock(dayKey: currentDayKey, blockId: blockId)
         reload()
     }
+    
+    func saveTemplateFromBlock(blockId: String, name: String) {
+        _ = WorkoutDiaryDBManager.shared.saveTemplateFromBlock(
+            dayKey: currentDayKey,
+            blockId: blockId,
+            name: name
+        )
+    }
+    
+    func applyTemplate(templateId: Int64) {
+        if let _ = manager.applyTemplate(templateId: templateId, dayKey: currentDayKey) {
+            reload()
+        }
+    }
+
 }

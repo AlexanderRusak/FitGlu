@@ -5,6 +5,7 @@ struct DiaryBlockCard: View {
     let onEditSet: (WorkoutDiarySet) -> Void
     let onDeleteSet: (WorkoutDiarySet) -> Void
     let onDeleteBlock: () -> Void
+    let onSaveTemplate: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -29,8 +30,10 @@ struct DiaryBlockCard: View {
             }
             .contentShape(Rectangle())
             .contextMenu {
+                Button("Save as template") { onSaveTemplate() }
                 Button("Delete block", role: .destructive) { onDeleteBlock() }
             }
+            
 
             // Exercises inside block
             VStack(alignment: .leading, spacing: 10) {

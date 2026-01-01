@@ -14,6 +14,10 @@ struct WorkoutDiaryScreen: View {
     @State private var editWeight: String = ""
     @State private var editReps: String = ""
     @State private var editNotes: String = ""
+    @State private var showTemplates = false
+    @State private var showSaveTemplateDialog = false
+    @State private var templateNameDraft = ""
+    @State private var pendingTemplateBlockId: String? = nil
 
     // MARK: - Draft models
 
@@ -27,9 +31,10 @@ struct WorkoutDiaryScreen: View {
     struct ExerciseDraft: Identifiable {
         let id = UUID()
         var name: String = ""
-        var notes: String = ""          // ✅ добавили
+        var notes: String = ""                 // ✅ notes на упражнение
         var sets: [SetDraft] = [SetDraft()]
     }
+
     @State private var drafts: [ExerciseDraft] = [ExerciseDraft()]
 
     // MARK: - Body
@@ -83,6 +88,11 @@ struct WorkoutDiaryScreen: View {
                                 },
                                 onDeleteBlock: {
                                     vm.deleteBlock(blockId: block.blockId)
+                                },
+                                onSaveTemplate: {
+                                    pendingTemplateBlockId = block.blockId
+                                    templateNameDraft = defaultTemplateName(for: block)
+                                    showSaveTemplateDialog = true
                                 }
                             )
                             .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
@@ -105,10 +115,17 @@ struct WorkoutDiaryScreen: View {
             .navigationTitle("Workout diary")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showAddSheet = true
-                    } label: {
-                        Image(systemName: "plus")
+                    HStack {
+                        Button {
+                            showAddSheet = true
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                        Button {
+                            showTemplates = true
+                        } label: {
+                            Image(systemName: "doc.on.doc")
+                        }
                     }
                 }
             }
@@ -119,6 +136,31 @@ struct WorkoutDiaryScreen: View {
             }
             .sheet(item: $editingSet) { set in
                 editSetSheet(set)
+            }
+            .navigationDestination(isPresented: $showTemplates) {
+                TemplatesScreen(
+                    dayKey: Int64(vm.selectedDate.startOfDay.timeIntervalSince1970),
+                    onApplied: { vm.reload() }
+                )
+            }
+            .alert("Save template", isPresented: $showSaveTemplateDialog) {
+                TextField("Template name", text: $templateNameDraft)
+
+                Button("Save") {
+                    guard let blockId = pendingTemplateBlockId else { return }
+                    let name = templateNameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !name.isEmpty else { return }
+
+                    vm.saveTemplateFromBlock(blockId: blockId, name: name)
+
+                    pendingTemplateBlockId = nil
+                    templateNameDraft = ""
+                }
+
+                Button("Cancel", role: .cancel) {
+                    pendingTemplateBlockId = nil
+                    templateNameDraft = ""
+                }
             }
         }
         .onAppear {
@@ -150,9 +192,9 @@ struct WorkoutDiaryScreen: View {
                         VStack(alignment: .leading, spacing: 12) {
 
                             TextField("Name", text: $exercise.name)
+
                             TextField("Notes", text: $exercise.notes, axis: .vertical)
                                 .font(.footnote)
-                                .foregroundStyle(.secondary)
 
                             ForEach($exercise.sets, id: \.id) { $set in
                                 HStack(spacing: 12) {
@@ -329,5 +371,17 @@ struct WorkoutDiaryScreen: View {
         df.timeStyle = .short
 
         return "\(df.string(from: start)) – \(df.string(from: end))"
+    }
+    
+    private func defaultTemplateName(for block: WorkoutDiaryBlock) -> String {
+        let base: String
+        switch (block.groupLabel ?? "").lowercased() {
+        case "superset": base = "Superset"
+        case "hiit":     base = "HIIT"
+        default:         base = "Exercise"
+        }
+
+        let names = block.exercises.map { $0.exerciseName }.joined(separator: " + ")
+        return names.isEmpty ? base : "\(base) · \(names)"
     }
 }

@@ -110,22 +110,63 @@ final class WorkoutDiaryViewModel: ObservableObject {
     }
     
     var blocks: [WorkoutDiaryBlock] {
-        let dict = Dictionary(grouping: groups) { $0.blockId }
+        // 1) группируем записи по blockId
+        let byBlock = Dictionary(grouping: entries) { $0.blockId }
 
-        return dict.map { blockId, groups in
-            let label = groups.first?.groupLabel
-            let sorted = groups.sorted { $0.exerciseName < $1.exerciseName }
+        // 2) превращаем в массив блоков + считаем "порядок" блока
+        let unsorted: [(block: WorkoutDiaryBlock, sortKey: Int64)] = byBlock.map { blockId, rows in
+            // sortKey блока = минимальный row.id
+            let blockSortKey = rows.map(\.id).min() ?? Int64.max
 
-            return WorkoutDiaryBlock(
+            let groupLabel = rows.first?.groupLabel
+
+            // 3) внутри блока группируем по exerciseName
+            let byExercise = Dictionary(grouping: rows) { $0.exerciseName }
+
+            // 4) делаем exercises в правильном порядке (по min row.id)
+            let exercises: [WorkoutDiaryGroup] = byExercise
+                .map { exerciseName, exRows in
+                    let exSortKey = exRows.map(\.id).min() ?? Int64.max
+
+                    let sets = exRows
+                        .sorted {
+                            if $0.setIndex != $1.setIndex { return $0.setIndex < $1.setIndex }
+                            return $0.id < $1.id
+                        }
+                        .map { row in
+                            WorkoutDiarySet(
+                                id: row.id,
+                                setIndex: row.setIndex,
+                                reps: row.reps,
+                                weight: row.weight,
+                                durationSec: row.durationSec,
+                                notes: row.notes
+                            )
+                        }
+
+                    return (WorkoutDiaryGroup(
+                        blockId: blockId,
+                        exerciseName: exerciseName,
+                        groupLabel: groupLabel,
+                        sets: sets
+                    ), exSortKey)
+                }
+                .sorted { $0.1 < $1.1 }       // ✅ порядок добавления упражнений
+                .map { $0.0 }
+
+            let block = WorkoutDiaryBlock(
                 blockId: blockId,
-                groupLabel: label,
-                exercises: sorted
+                groupLabel: groupLabel,
+                exercises: exercises
             )
+
+            return (block, blockSortKey)
         }
-        // сортировка блоков: по label, потом по имени первого упражнения (можно поменять)
-        .sorted {
-            ($0.groupLabel ?? "") < ($1.groupLabel ?? "")
-        }
+
+        // 5) сортируем блоки по sortKey (порядок добавления блоков)
+        return unsorted
+            .sorted { $0.sortKey < $1.sortKey }
+            .map { $0.block }
     }
 
     // MARK: - Adding sets (из шита добавления)

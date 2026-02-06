@@ -285,3 +285,125 @@ extension DetailsViewModel {
         return Int(score.rounded())
     }
 }
+
+// MARK: - MVP: pick primary workout & primary HR segment
+
+extension DetailsViewModel {
+
+    enum PrimaryWorkoutKind: String {
+        case hiit = "HIIT"
+        case traditionalStrength = "Traditional Strength Training"
+        case functionalStrength = "Functional Strength Training"
+    }
+
+    // Нормализация названий типов (на всякий случай)
+    private func normalizeType(_ raw: String) -> String {
+        let nbpsFixed = raw.replacingOccurrences(of: "\u{00A0}", with: " ")
+        let trimmed = nbpsFixed.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+    }
+
+    private func kind(for training: TrainingRow) -> PrimaryWorkoutKind? {
+        let t = normalizeType(training.type)
+
+        // строгие совпадения (как от HealthKit workoutName)
+        if t == PrimaryWorkoutKind.hiit.rawValue { return .hiit }
+        if t == PrimaryWorkoutKind.traditionalStrength.rawValue { return .traditionalStrength }
+        if t == PrimaryWorkoutKind.functionalStrength.rawValue { return .functionalStrength }
+
+        // fallback по подстрокам (если где-то локализовано/иначе приходит)
+        let lower = t.lowercased()
+        if lower.contains("hiit") || lower.contains("interval") { return .hiit }
+        if lower.contains("traditional") && lower.contains("strength") { return .traditionalStrength }
+        if lower.contains("functional") && lower.contains("strength") { return .functionalStrength }
+        if lower.contains("strength") || lower.contains("сил") { return .traditionalStrength } // спорно, но MVP ок
+
+        return nil
+    }
+
+    /// ✅ Главная тренировка дня (силовая/HIIT). Для MVP ожидаем 0 или 1, но если несколько — выберем самую “тяжёлую”.
+    func pickPrimaryWorkout(for day: Date) -> TrainingRow? {
+        let targetDay = day.startOfDay
+
+        // тренировки только этого дня
+        let dayTrainings = trainings.filter {
+            Calendar.current.isDate(Date(timeIntervalSince1970: $0.startTime), inSameDayAs: targetDay)
+            || Calendar.current.isDate(Date(timeIntervalSince1970: $0.endTime), inSameDayAs: targetDay)
+        }
+
+        // оставляем только HIIT/Strength
+        let candidates = dayTrainings.filter { kind(for: $0) != nil }
+        guard !candidates.isEmpty else { return nil }
+        if candidates.count == 1 { return candidates[0] }
+
+        // если вдруг несколько — скоринг по “интенсивности”
+        func minutes(_ tr: TrainingRow) -> Double {
+            max(0, tr.endTime - tr.startTime) / 60.0
+        }
+
+        func kcal(_ tr: TrainingRow) -> Double {
+            energyByTraining[tr.id] ?? (tr.energyKcal ?? 0)
+        }
+
+        func typeWeight(_ tr: TrainingRow) -> Double {
+            switch kind(for: tr) {
+            case .hiit: return 1.00
+            case .functionalStrength: return 0.92
+            case .traditionalStrength: return 0.90
+            case nil: return 0.70
+            }
+        }
+
+        return candidates.max { a, b in
+            let scoreA = typeWeight(a) * 10.0 + kcal(a) * 0.01 + minutes(a) * 0.10
+            let scoreB = typeWeight(b) * 10.0 + kcal(b) * 0.01 + minutes(b) * 0.10
+            return scoreA < scoreB
+        }
+    }
+
+    /// ✅ Главный HR-сегмент дня: выбираем по “наиболее интенсивному” сегменту.
+    /// Не завязан на start/end тренировки (как ты и хотел).
+    func pickPrimaryHRSegment(
+        minDurationMin: Double = 8,
+        preferHighMax: Bool = true
+    ) -> [HRPoint]? {
+
+        let minPoints = Int((minDurationMin * 60.0) / 5.0) // грубо: если HR точка ~ каждые 5 сек? (можно не идеально)
+        let segments = hrSegments.filter { $0.count >= max(1, minPoints / 2) } // мягкий фильтр, чтобы не убить сегменты
+
+        guard !segments.isEmpty else { return nil }
+
+        func durationSec(_ seg: [HRPoint]) -> Double {
+            guard let first = seg.first?.time, let last = seg.last?.time else { return 0 }
+            return max(0, last.timeIntervalSince(first))
+        }
+
+        func avgBpm(_ seg: [HRPoint]) -> Double {
+            guard !seg.isEmpty else { return 0 }
+            let sum = seg.reduce(0) { $0 + $1.bpm }
+            return Double(sum) / Double(seg.count)
+        }
+
+        func maxBpm(_ seg: [HRPoint]) -> Int {
+            seg.map(\.bpm).max() ?? 0
+        }
+
+        // скоринг: max bpm + avg bpm + длительность
+        func score(_ seg: [HRPoint]) -> Double {
+            let durMin = durationSec(seg) / 60.0
+            let avg = avgBpm(seg)
+            let mx = Double(maxBpm(seg))
+
+            // dur даёт небольшой бонус, но не доминирует
+            let durBonus = min(20.0, durMin) * 0.25
+
+            return (preferHighMax ? mx * 1.0 : avg * 1.0) + avg * 0.6 + durBonus
+        }
+
+        // фильтр по минимальной длительности (реальный, по времени)
+        let byDuration = segments.filter { (durationSec($0) / 60.0) >= minDurationMin }
+        let pool = byDuration.isEmpty ? segments : byDuration
+
+        return pool.max(by: { score($0) < score($1) })
+    }
+}

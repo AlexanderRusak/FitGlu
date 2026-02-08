@@ -213,6 +213,7 @@ final class DailyCoachViewModel: ObservableObject {
             sleepMin: data.sleepMinutes,
             restingHR: data.restingHR,
             baselineHR: baselineHR,
+            planAnalysisVersion: AISummaryBuilder.analysisVersion,
             hrMax: HRMaxDBManager.shared.valueOrDefault(age: details.userAge),
             proteinG: data.proteinG,
             kcal: data.kcal,
@@ -258,6 +259,7 @@ final class DailyCoachViewModel: ObservableObject {
                 .sorted { $0.time < $1.time }
 
             if let s = StrengthHRAnalyzer.analyze(points: hrPoints) {
+                newMetrics.strengthAnalysisVersion = s.analysisVersion
                 newMetrics.strengthHasEnoughHR = s.hasEnoughData
                 newMetrics.strengthDurationMin = s.durationMin
                 newMetrics.strengthAvgHR = s.avgHR
@@ -272,6 +274,7 @@ final class DailyCoachViewModel: ObservableObject {
 
                 newMetrics.restRecommendedSec = s.restRecommendedSec
                 newMetrics.restDisciplineScore = s.restDisciplineScore
+                log.info("Strength: ver=\(s.analysisVersion, privacy: .public), dur=\(s.durationMin, privacy: .public) min, eff=\(s.efficiencyScore, privacy: .public)")
             } else {
                 newMetrics.strengthHasEnoughHR = false
             }
@@ -292,6 +295,7 @@ final class DailyCoachViewModel: ObservableObject {
                 .sorted { $0.time < $1.time }
 
             if let h = HIITHRAnalyzer.analyze(points: hrPoints) {
+                newMetrics.hiitAnalysisVersion = h.analysisVersion
                 newMetrics.hiitHasEnoughHR = h.hasEnoughData
                 newMetrics.hiitDurationMin = h.durationMin
                 newMetrics.hiitAvgHR = h.avgHR
@@ -314,7 +318,7 @@ final class DailyCoachViewModel: ObservableObject {
                 newMetrics.hiitHasEnoughHR = false
             }
 
-            log.info("HIIT: dur=\(newMetrics.hiitDurationMin ?? -1) min, intervals=\(newMetrics.hiitIntervalCount ?? -1), high%=\(newMetrics.hiitTimeInHighZonePct ?? -1)")
+            log.info("HIIT: ver=\(newMetrics.hiitAnalysisVersion ?? "n/a", privacy: .public), dur=\(newMetrics.hiitDurationMin ?? -1) min, intervals=\(newMetrics.hiitIntervalCount ?? -1), high%=\(newMetrics.hiitTimeInHighZonePct ?? -1)")
         }
 
         metrics = newMetrics
@@ -362,6 +366,7 @@ final class DailyCoachViewModel: ObservableObject {
         }
 
         let prompt = AISummaryBuilder.makeDailyPrompt(from: metrics, goal: goal, rules: rules) + extra
+        aiLog.info("AI plan version: \(AISummaryBuilder.analysisVersion, privacy: .public)")
 
         if let json = metrics.prettyJSON {
             aiLog.debug("AI prompt built from metrics:\n\(json, privacy: .public)")
@@ -634,6 +639,7 @@ struct DailyCoachMetrics: Codable {
     var sleepMin: Int
     var restingHR: Int?
     var baselineHR: Int?
+    var planAnalysisVersion: String?
     var hrMax: Int
     var proteinG: Int
     var kcal: Double
@@ -655,6 +661,7 @@ struct DailyCoachMetrics: Codable {
     var lastTrainingSummary: String?
 
     // Strength MVP
+    var strengthAnalysisVersion: String?
     var strengthDurationMin: Int?
     var strengthAvgHR: Int?
     var strengthMaxHR: Int?
@@ -681,6 +688,7 @@ struct DailyCoachMetrics: Codable {
     var strengthHasEnoughHR: Bool?
 
     // HIIT MVP
+    var hiitAnalysisVersion: String?
     var hiitHasEnoughHR: Bool?
     var hiitDurationMin: Int?
     var hiitAvgHR: Int?
@@ -731,6 +739,7 @@ struct DailyCoachMetrics: Codable {
         sleepMin: 0,
         restingHR: nil,
         baselineHR: 0,
+        planAnalysisVersion: AISummaryBuilder.analysisVersion,
         hrMax: 0,
         proteinG: 0,
         kcal: 0,
@@ -748,6 +757,7 @@ struct DailyCoachMetrics: Codable {
         trainingReadinessLabel: nil,
         lastTrainingScore: nil,
         lastTrainingSummary: nil,
+        strengthAnalysisVersion: nil,
         strengthDurationMin: nil,
         strengthAvgHR: nil,
         strengthMaxHR: nil,
@@ -766,6 +776,7 @@ struct DailyCoachMetrics: Codable {
         diaryApproxTonnage: nil,
         diaryTopExercises: nil,
         strengthHasEnoughHR: nil,
+        hiitAnalysisVersion: nil,
         hiitHasEnoughHR: nil,
         hiitDurationMin: nil,
         hiitAvgHR: nil,

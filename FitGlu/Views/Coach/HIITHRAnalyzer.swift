@@ -1,6 +1,7 @@
 import Foundation
 
 struct HIITStats {
+    let analysisVersion: String
     let hasEnoughData: Bool
 
     let durationMin: Int
@@ -26,12 +27,14 @@ struct HIITStats {
 }
 
 enum HIITHRAnalyzer {
+    static let analysisVersion = "v1.0"
 
     /// points — HR точки уже ОТСОРТИРОВАНЫ по времени и уже отфильтрованы в окно HIIT тренировки
     static func analyze(points: [HRPoint]) -> HIITStats? {
         // Минимум данных, иначе шум
         guard points.count >= 60 else {
             return HIITStats(
+                analysisVersion: analysisVersion,
                 hasEnoughData: false,
                 durationMin: Int(max(0, (points.last?.time.timeIntervalSince(points.first?.time ?? Date()) ?? 0) / 60.0)),
                 avgHR: 0,
@@ -149,6 +152,7 @@ enum HIITHRAnalyzer {
         }
 
         return HIITStats(
+            analysisVersion: analysisVersion,
             hasEnoughData: true,
             durationMin: durationMin,
             avgHR: avgHR,

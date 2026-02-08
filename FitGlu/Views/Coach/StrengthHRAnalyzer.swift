@@ -1,6 +1,7 @@
 import Foundation
 
 struct StrengthStats {
+    let analysisVersion: String
     let durationMin: Int
     let avgHR: Int
     let maxHR: Int
@@ -23,11 +24,13 @@ struct StrengthStats {
 }
 
 enum StrengthHRAnalyzer {
+    static let analysisVersion = "v1.0"
 
     static func analyze(points: [HRPoint]) -> StrengthStats? {
         let pts = points.sorted { $0.time < $1.time }
         guard pts.count >= 120 else {
             return StrengthStats(
+                analysisVersion: analysisVersion,
                 durationMin: Int(max(1, (pts.last?.time.timeIntervalSince(pts.first?.time ?? Date()) ?? 0) / 60)),
                 avgHR: pts.map(\.bpm).averageInt(),
                 maxHR: pts.map(\.bpm).max() ?? 0,
@@ -139,6 +142,7 @@ enum StrengthHRAnalyzer {
         }()
 
         return StrengthStats(
+            analysisVersion: analysisVersion,
             durationMin: durationMin,
             avgHR: avgHR,
             maxHR: maxHR,
@@ -200,4 +204,3 @@ private extension Array where Element == Int {
         return Int(((Double(s[s.count/2 - 1] + s[s.count/2])) / 2.0).rounded())
     }
 }
-

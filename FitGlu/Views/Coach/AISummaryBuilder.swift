@@ -1,6 +1,8 @@
 import Foundation
 
 enum AISummaryBuilder {
+    static let analysisVersion = "v1.0"
+
     static func makeDailyPrompt(from m: DailyCoachMetrics, goal: TrainingGoal, rules: CoachRuleOutput) -> String {
         """
         Ты — спортивный врач и тренер по восстановлению.  
@@ -31,6 +33,7 @@ enum AISummaryBuilder {
         • Rest: \(rules.rest.first ?? "—"); \(rules.rest.dropFirst().first ?? "—")
         • Load: \(rules.load)
         • Warning: \(rules.warning)
+        • Plan analysisVersion: \(analysisVersion)
 
         ⚙️ **Интерпретация данных (правила для рекомендаций):**
         - Все рекомендации должны основываться на актуальных научных данных и рекомендациях и быть адаптированы под конкретные показатели пользователя и его цель. Избегай шаблонных, слишком общих советов.  

@@ -1,6 +1,7 @@
 import Foundation
 
 struct LocalDBProvider {
+    private let settingsKey = "fitglu.userSettings.v1"
 
     func trainings(from start: Date, to end: Date) -> [TrainingRow] {
         TrainingLogDBManager.shared
@@ -22,5 +23,22 @@ struct LocalDBProvider {
                 let ts = Date(timeIntervalSince1970: $0.timestamp)
                 return ts >= start && ts < end
             }
+    }
+
+    func loadUserSettings() -> UserSettings {
+        guard
+            let data = UserDefaults.standard.data(forKey: settingsKey),
+            let decoded = try? JSONDecoder().decode(UserSettings.self, from: data)
+        else {
+            return .default
+        }
+        return decoded
+    }
+
+    func saveUserSettings(_ settings: UserSettings) {
+        var value = settings
+        value.updatedAt = .now
+        guard let data = try? JSONEncoder().encode(value) else { return }
+        UserDefaults.standard.set(data, forKey: settingsKey)
     }
 }

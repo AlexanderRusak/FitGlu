@@ -7,6 +7,7 @@ final class DailyCoachViewModel: ObservableObject {
     @Published var metrics = DailyCoachMetrics.empty
     @Published var aiSummary: String = ""
     @Published var aiBusy = false
+    @Published var goal: TrainingGoal = .maintain
 
     // MARK: - Providers
     private let local = LocalDBProvider()
@@ -20,7 +21,7 @@ final class DailyCoachViewModel: ObservableObject {
     private let aiLog = Logger(subsystem: "com.yourapp.fitglu", category: "DailyCoach.AI")
 
     // MARK: - Debug day switch
-    private static let useDebugDay = true
+    private static let useDebugDay = false
 
     private static var debugDay: Date {
         Calendar.current.date(from: DateComponents(year: 2026, month: 2, day: 1))!
@@ -130,6 +131,9 @@ final class DailyCoachViewModel: ObservableObject {
 
     // MARK: - Public
     func load(for _: Date = Date()) async {
+        self.goal = local.loadUserSettings().goal
+        self.log.info("Loaded goal from settings: \(self.goal.rawValue, privacy: .public)")
+
         let authorized = await healthKit.requestAuthorization()
         log.info("HealthKit authorization granted: \(authorized, privacy: .public)")
         guard authorized else { return }

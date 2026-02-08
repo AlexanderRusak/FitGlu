@@ -5,6 +5,7 @@ struct FitGluApp: App {
 
     //--- Сервисы
     private let hkAuth = HealthKitAuthorizationManager()
+    @StateObject private var settings = AppSettingsStore()
 
     //--- Инициализация ― выполняется один раз
     init() {
@@ -33,6 +34,7 @@ struct FitGluApp: App {
     var body: some Scene {
         WindowGroup {
             MainTabView()
+                .environmentObject(settings)
                 .onAppear {
                     // безопасно обращаться к HealthKit-провайдерам
                     // (авторизация уже запрошена в init)

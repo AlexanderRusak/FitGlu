@@ -211,6 +211,7 @@ final class DailyCoachViewModel: ObservableObject {
             steps: data.steps,
             stepsTarget: 9000,
             sleepMin: data.sleepMinutes,
+            restingHR: data.restingHR,
             baselineHR: baselineHR,
             hrMax: HRMaxDBManager.shared.valueOrDefault(age: details.userAge),
             proteinG: data.proteinG,
@@ -320,7 +321,7 @@ final class DailyCoachViewModel: ObservableObject {
     }
 
     // MARK: - AI summary
-    func runAI() async {
+    func runAI(goal: TrainingGoal, rules: CoachRuleOutput) async {
         aiBusy = true
         defer { aiBusy = false }
 
@@ -360,7 +361,7 @@ final class DailyCoachViewModel: ObservableObject {
             extra += "hiitWeakSpot=\(metrics.hiitWeakSpot ?? "none")\n"
         }
 
-        let prompt = AISummaryBuilder.makeDailyPrompt(from: metrics) + extra
+        let prompt = AISummaryBuilder.makeDailyPrompt(from: metrics, goal: goal, rules: rules) + extra
 
         if let json = metrics.prettyJSON {
             aiLog.debug("AI prompt built from metrics:\n\(json, privacy: .public)")
@@ -631,6 +632,7 @@ struct DailyCoachMetrics: Codable {
     var steps: Int
     var stepsTarget: Int
     var sleepMin: Int
+    var restingHR: Int?
     var baselineHR: Int?
     var hrMax: Int
     var proteinG: Int
@@ -727,6 +729,7 @@ struct DailyCoachMetrics: Codable {
         steps: 0,
         stepsTarget: 9000,
         sleepMin: 0,
+        restingHR: nil,
         baselineHR: 0,
         hrMax: 0,
         proteinG: 0,

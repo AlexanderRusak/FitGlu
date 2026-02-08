@@ -3,6 +3,7 @@ import SwiftUI
 /// Главный «дневной» экран: простые метрики + AI-анализ.
 public struct DailyCoachScreen: View {
     @StateObject private var vm = DailyCoachViewModel()
+    @EnvironmentObject private var settings: AppSettingsStore
     
     public init() {}
     
@@ -210,7 +211,25 @@ public struct DailyCoachScreen: View {
                     }
 
                     
-                    // 4️⃣ — Рекомендации AI
+                    // 4️⃣ — Goal rules (MVP)
+                    let output = GoalRulesEngine.build(goal: settings.goal, metrics: vm.metrics)
+                    SectionCard(title: "Goal: \(settings.goal.title)") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("1) \(output.diagnosis)")
+                            Text("2) Отдых:")
+                            Text("• \(output.rest[0])")
+                            Text("• \(output.rest[1])")
+                            Text("3) Нагрузка: \(output.load)")
+                            Text("4) Предупреждение: \(output.warning)")
+                            if !output.tags.isEmpty {
+                                HStack(spacing: 8) {
+                                    ForEach(output.tags, id: \.self) { Pill(text: $0) }
+                                }
+                            }
+                        }
+                    }
+
+                    // 5️⃣ — Рекомендации AI
                     SectionCard(title: "Coach AI") {
                         if vm.aiBusy {
                             ProgressView("Analyzing…")
@@ -240,7 +259,8 @@ public struct DailyCoachScreen: View {
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
-                            Task { await vm.runAI() }
+                            let output = GoalRulesEngine.build(goal: settings.goal, metrics: vm.metrics)
+                            Task { await vm.runAI(goal: settings.goal, rules: output) }
                         } label: {
                             Label("Analyze", systemImage: "sparkles")
                         }

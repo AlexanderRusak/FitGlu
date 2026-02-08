@@ -17,6 +17,10 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Activity", systemImage: "chart.bar")
                 }
+            SettingsScreen()
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape")
+                }
             
          /*   DetailsScreen()
                 .tabItem {
@@ -33,4 +37,5 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
+        .environmentObject(AppSettingsStore())
 }

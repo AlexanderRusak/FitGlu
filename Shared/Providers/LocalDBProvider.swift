@@ -41,4 +41,22 @@ struct LocalDBProvider {
         guard let data = try? JSONEncoder().encode(value) else { return }
         UserDefaults.standard.set(data, forKey: settingsKey)
     }
+
+    func upsertDailySnapshot(_ snapshot: DailySnapshot) {
+        DailySnapshotDBManager.shared.upsert(snapshot)
+    }
+
+    func getDailySnapshot(date: Date) -> DailySnapshot? {
+        let id = Self.snapshotID(for: date)
+        return DailySnapshotDBManager.shared.get(dateID: id)
+    }
+
+    static func snapshotID(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = .current
+        formatter.timeZone = .current
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Calendar.current.startOfDay(for: date))
+    }
 }

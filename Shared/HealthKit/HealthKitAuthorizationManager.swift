@@ -22,6 +22,7 @@ final class HealthKitAuthorizationManager: ObservableObject {
             HKObjectType.quantityType(forIdentifier: .stepCount)!,
             HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!,
             HKObjectType.quantityType(forIdentifier: .dietaryProtein)!,
+            HKObjectType.quantityType(forIdentifier: .dietaryEnergyConsumed)!,
             HKObjectType.quantityType(forIdentifier: .restingHeartRate)!,
             HKObjectType.quantityType(forIdentifier: .leanBodyMass)!,
             HKObjectType.quantityType(forIdentifier: .bodyFatPercentage)!,
@@ -79,6 +80,7 @@ final class HealthKitAuthorizationManager: ObservableObject {
         async let hrRest = fetchRestingHR(from: start, to: end)
         async let protein = fetchProtein(from: start, to: end)
         async let energy = fetchEnergy(from: start, to: end)
+        async let kcalTotal = fetchDietaryEnergyTotal(from: start, to: end)
 
         // “последнее значение на момент end”
         async let weight = fetchWeight(latestUpTo: end)
@@ -92,6 +94,8 @@ final class HealthKitAuthorizationManager: ObservableObject {
             proteinG: protein,
             weightKg: weight,
             kcal: energy,
+            kcalTotal: kcalTotal,
+            hasKcalTotal: kcalTotal != nil,
             leanMassKg: lean,
             fatPercent: fat
         )
@@ -240,6 +244,31 @@ final class HealthKitAuthorizationManager: ObservableObject {
         }
     }
 
+    // Dietary total energy (kcal): cumulative sum in range.
+    // Returns nil when nutrition data is unavailable.
+    private func fetchDietaryEnergyTotal(from start: Date, to end: Date) async -> Int? {
+        await withCheckedContinuation { continuation in
+            let type = HKQuantityType.quantityType(forIdentifier: .dietaryEnergyConsumed)!
+            let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+
+            let query = HKStatisticsQuery(quantityType: type,
+                                          quantitySamplePredicate: predicate,
+                                          options: .cumulativeSum) { _, result, error in
+                if error != nil {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                guard let sum = result?.sumQuantity() else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                let value = sum.doubleValue(for: .kilocalorie())
+                continuation.resume(returning: Int(value.rounded()))
+            }
+            healthStore.execute(query)
+        }
+    }
+
     // Latest weight sample up to endDate
     private func fetchWeight(latestUpTo endDate: Date) async -> Double? {
         await fetchLatestQuantitySample(
@@ -323,6 +352,8 @@ struct HealthKitDailyData {
     let proteinG: Int
     let weightKg: Double?
     let kcal: Double
+    let kcalTotal: Int?
+    let hasKcalTotal: Bool
     let leanMassKg: Double?
     let fatPercent: Double?
 }

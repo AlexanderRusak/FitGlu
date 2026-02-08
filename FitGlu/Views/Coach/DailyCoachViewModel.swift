@@ -325,6 +325,29 @@ final class DailyCoachViewModel: ObservableObject {
             log.info("HIIT: ver=\(newMetrics.hiitAnalysisVersion ?? "n/a", privacy: .public), dur=\(newMetrics.hiitDurationMin ?? -1) min, intervals=\(newMetrics.hiitIntervalCount ?? -1), high%=\(newMetrics.hiitTimeInHighZonePct ?? -1)")
         }
 
+        let snapshot = DailySnapshot(
+            id: LocalDBProvider.snapshotID(for: dayStart),
+            date: dayStart,
+            steps: data.steps,
+            sleepMinutes: data.sleepMinutes,
+            restingHR: data.restingHR,
+            baselineRHR: baselineHR,
+            weightKg: data.weightKg,
+            proteinG: data.proteinG,
+            kcalTotal: data.kcalTotal,
+            readiness: newMetrics.readiness,
+            trainingReadiness: newMetrics.trainingReadiness ?? 0,
+            trainingReadinessLabel: newMetrics.trainingReadinessLabel ?? "—",
+            recoveryProgress: newMetrics.recoveryProgress ?? 0,
+            lastTrainingType: newMetrics.lastTrainingType,
+            lastTrainingScore: newMetrics.lastTrainingScore,
+            analysisVersion: newMetrics.planAnalysisVersion ?? AISummaryBuilder.analysisVersion,
+            dataQuality: .init(hasKcal: data.hasKcalTotal),
+            createdAt: .now
+        )
+        local.upsertDailySnapshot(snapshot)
+        log.info("DailySnapshot saved: id=\(snapshot.id, privacy: .public), kcalTotal=\(snapshot.kcalTotal ?? -1, privacy: .public), hasKcal=\(snapshot.dataQuality.hasKcal, privacy: .public)")
+
         metrics = newMetrics
     }
 

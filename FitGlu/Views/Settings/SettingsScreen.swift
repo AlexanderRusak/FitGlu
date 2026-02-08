@@ -9,16 +9,14 @@ struct SettingsScreen: View {
                 Section("Goal") {
                     Picker("Training goal", selection: $settings.goal) {
                         ForEach(TrainingGoal.allCases) { g in
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(g.title)
-                                Text(g.subtitle)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .tag(g)
+                            Text(g.title).tag(g)
                         }
                     }
-                    .pickerStyle(.inline)
+                    .pickerStyle(.segmented)
+
+                    Text(settings.goal.subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
             .navigationTitle("Settings")

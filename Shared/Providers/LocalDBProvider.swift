@@ -51,6 +51,24 @@ struct LocalDBProvider {
         return DailySnapshotDBManager.shared.get(dateID: id)
     }
 
+    func upsertCoachPlan(_ plan: CoachPlan) {
+        CoachPlanDBManager.shared.upsert(plan)
+    }
+
+    func getCoachPlan(date: Date) -> CoachPlan? {
+        let id = Self.snapshotID(for: date)
+        return CoachPlanDBManager.shared.get(dateID: id)
+    }
+
+    func upsertCoachFollowUp(_ followUp: CoachFollowUp) {
+        CoachFollowUpDBManager.shared.upsert(followUp)
+    }
+
+    func getCoachFollowUp(date: Date) -> CoachFollowUp? {
+        let id = Self.snapshotID(for: date)
+        return CoachFollowUpDBManager.shared.get(dateID: id)
+    }
+
     static func snapshotID(for date: Date) -> String {
         let formatter = DateFormatter()
         formatter.calendar = .current

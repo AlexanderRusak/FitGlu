@@ -69,6 +69,8 @@
 		706A99932DC5840F003567C6 /* Exceptions for "Shared" folder in "FitGlu Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Managers/CoachPlanDBManager.swift,
+				Models/CoachPlan.swift,
 				Providers/LocalDBProvider.swift,
 				Providers/PhoneConnectivityProvider.swift,
 			);

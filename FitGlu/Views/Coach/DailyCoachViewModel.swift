@@ -8,6 +8,7 @@ final class DailyCoachViewModel: ObservableObject {
     @Published var aiSummary: String = ""
     @Published var aiBusy = false
     @Published var goal: TrainingGoal = .maintain
+    @Published var followUp: CoachFollowUp?
 
     // MARK: - Providers
     private let local = LocalDBProvider()
@@ -348,7 +349,21 @@ final class DailyCoachViewModel: ObservableObject {
         local.upsertDailySnapshot(snapshot)
         log.info("DailySnapshot saved: id=\(snapshot.id, privacy: .public), kcalTotal=\(snapshot.kcalTotal ?? -1, privacy: .public), hasKcal=\(snapshot.dataQuality.hasKcal, privacy: .public)")
 
+        if let follow = buildCoachFollowUpForToday(todaySnapshot: snapshot, yesterday: yesterday) {
+            local.upsertCoachFollowUp(follow)
+            followUp = follow
+            log.info("CoachFollowUp saved: id=\(follow.id, privacy: .public), planDateId=\(follow.planDateId, privacy: .public)")
+        } else {
+            followUp = local.getCoachFollowUp(date: dayStart)
+        }
+
         metrics = newMetrics
+        if let cachedPlan = local.getCoachPlan(date: dayStart) {
+            aiSummary = cachedPlan.planText
+            aiLog.info("CoachPlan restored from DB: id=\(cachedPlan.id, privacy: .public), ver=\(cachedPlan.analysisVersion, privacy: .public)")
+        } else {
+            aiSummary = ""
+        }
     }
 
     // MARK: - AI summary
@@ -408,9 +423,181 @@ final class DailyCoachViewModel: ObservableObject {
             let trimmed = result.trimmingCharacters(in: .whitespacesAndNewlines)
             aiLog.info("AI summary received (\(trimmed.count, privacy: .public) chars)")
             aiSummary = trimmed
+
+            let parsed = parseCoachPlanSections(from: trimmed)
+            let dayStart = day.startOfDay
+            let plan = CoachPlan(
+                id: LocalDBProvider.snapshotID(for: dayStart),
+                date: dayStart,
+                goal: goal,
+                snapshotId: LocalDBProvider.snapshotID(for: dayStart),
+                analysisVersion: AISummaryBuilder.analysisVersion,
+                planText: trimmed,
+                actions: parsed.actions,
+                avoid: parsed.avoid,
+                improve: parsed.improve,
+                motivation: parsed.motivation,
+                createdAt: .now
+            )
+            local.upsertCoachPlan(plan)
+            aiLog.info("CoachPlan saved: id=\(plan.id, privacy: .public), actions=\(plan.actions.count, privacy: .public)")
         } catch {
             aiLog.error("AI error: \(error.localizedDescription, privacy: .public)")
             aiSummary = "Ошибка AI: \(error.localizedDescription)"
+        }
+    }
+
+    private func parseCoachPlanSections(from text: String) -> (actions: [String], avoid: String, improve: String, motivation: String) {
+        var sections: [Int: String] = [:]
+        var currentIndex: Int?
+
+        for rawLine in text.components(separatedBy: .newlines) {
+            let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !line.isEmpty else { continue }
+
+            if let point = parsePointIndex(from: line) {
+                currentIndex = point
+                let withoutPrefix = stripPointPrefix(line, for: point)
+                sections[point] = stripPointLabel(withoutPrefix, for: point)
+                continue
+            }
+
+            guard let currentIndex else { continue }
+            let previous = sections[currentIndex]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            sections[currentIndex] = previous.isEmpty ? line : "\(previous) \(line)"
+        }
+
+        let action1 = normalizedPointText(sections[1])
+        let action2 = normalizedPointText(sections[2])
+        let action3 = normalizedPointText(sections[3])
+        let motivation = normalizedPointText(sections[4])
+
+        return (
+            actions: [action1, action2, action3],
+            avoid: action2,
+            improve: action3,
+            motivation: motivation
+        )
+    }
+
+    private func parsePointIndex(from line: String) -> Int? {
+        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        let prefixes: [(Int, [String])] = [
+            (1, ["1️⃣", "1)", "1.", "1:", "1 "]),
+            (2, ["2️⃣", "2)", "2.", "2:", "2 "]),
+            (3, ["3️⃣", "3)", "3.", "3:", "3 "]),
+            (4, ["4️⃣", "4)", "4.", "4:", "4 "])
+        ]
+
+        for (index, values) in prefixes {
+            if values.contains(where: { trimmed.hasPrefix($0) }) {
+                return index
+            }
+        }
+        return nil
+    }
+
+    private func stripPointPrefix(_ line: String, for point: Int) -> String {
+        let variants: [String]
+        switch point {
+        case 1: variants = ["1️⃣", "1)", "1.", "1:", "1 "]
+        case 2: variants = ["2️⃣", "2)", "2.", "2:", "2 "]
+        case 3: variants = ["3️⃣", "3)", "3.", "3:", "3 "]
+        case 4: variants = ["4️⃣", "4)", "4.", "4:", "4 "]
+        default: variants = []
+        }
+
+        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        for prefix in variants where trimmed.hasPrefix(prefix) {
+            return String(trimmed.dropFirst(prefix.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return trimmed
+    }
+
+    private func stripPointLabel(_ text: String, for point: Int) -> String {
+        let labels: [String]
+        switch point {
+        case 1:
+            labels = ["**Что делать:**", "Что делать:", "**Что делать**:", "Что делать —"]
+        case 2:
+            labels = ["**Чего избегать:**", "Чего избегать:", "**Чего избегать**:", "Чего избегать —"]
+        case 3:
+            labels = ["**Что улучшить:**", "Что улучшить:", "**Что улучшить**:", "Что улучшить —"]
+        case 4:
+            labels = ["**Мотивация:**", "Мотивация:", "**Мотивация**:", "Мотивация —"]
+        default:
+            labels = []
+        }
+
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        for label in labels where trimmed.hasPrefix(label) {
+            return String(trimmed.dropFirst(label.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return trimmed
+    }
+
+    private func normalizedPointText(_ text: String?) -> String {
+        let value = text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return value.isEmpty ? "—" : value
+    }
+
+    private func buildCoachFollowUpForToday(todaySnapshot: DailySnapshot, yesterday: Date) -> CoachFollowUp? {
+        let dayStart = todaySnapshot.date.startOfDay
+        let yesterdayId = LocalDBProvider.snapshotID(for: yesterday)
+        guard
+            let yesterdayPlan = local.getCoachPlan(date: yesterday),
+            let yesterdaySnapshot = local.getDailySnapshot(date: yesterday)
+        else {
+            return nil
+        }
+
+        let planText = "\(yesterdayPlan.planText)\n\(yesterdayPlan.actions.joined(separator: "\n"))".lowercased()
+        let expectedProtein = planText.contains("бел") || planText.contains("protein")
+        let expectedSteps = planText.contains("шаг")
+        let expectedSleep = planText.contains("сон") || planText.contains("sleep") || planText.contains("спать")
+        let expectedTraining = planText.contains("тренир") || planText.contains("hiit") || planText.contains("сил") || planText.contains("бег")
+
+        let proteinTarget = inferredProteinTarget(from: yesterdayPlan)
+        let stepsTarget = 9000
+        let sleepTargetMin = 420
+
+        let trainingDone = (yesterdaySnapshot.lastTrainingType?.isEmpty == false)
+        let weightDelta: Double? = {
+            guard let todayWeight = todaySnapshot.weightKg, let yesterdayWeight = yesterdaySnapshot.weightKg else { return nil }
+            return todayWeight - yesterdayWeight
+        }()
+
+        return CoachFollowUp(
+            id: LocalDBProvider.snapshotID(for: dayStart),
+            date: dayStart,
+            planDateId: yesterdayId,
+            proteinHit: expectedProtein ? (yesterdaySnapshot.proteinG >= proteinTarget) : nil,
+            stepsHit: expectedSteps ? (yesterdaySnapshot.steps >= stepsTarget) : nil,
+            sleepHit: expectedSleep ? (yesterdaySnapshot.sleepMinutes >= sleepTargetMin) : nil,
+            trainingDone: expectedTraining ? trainingDone : nil,
+            weightDelta: weightDelta,
+            restingHRDelta: todaySnapshot.restingHR - yesterdaySnapshot.restingHR,
+            createdAt: .now
+        )
+    }
+
+    private func inferredProteinTarget(from plan: CoachPlan) -> Int {
+        let lines = plan.planText.components(separatedBy: .newlines)
+        for line in lines {
+            let lower = line.lowercased()
+            guard lower.contains("бел") || lower.contains("protein") else { continue }
+            let numbers = lower
+                .split(whereSeparator: { !$0.isNumber })
+                .compactMap { Int($0) }
+            if let target = numbers.first(where: { $0 >= 40 && $0 <= 260 }) {
+                return target
+            }
+        }
+
+        switch plan.goal {
+        case .maintain: return 120
+        case .fatLoss: return 130
+        case .muscleGain: return 150
         }
     }
 

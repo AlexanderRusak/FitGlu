@@ -250,6 +250,22 @@ public struct DailyCoachScreen: View {
                             }
                         }
                     }
+
+                    // 6️⃣ — Follow-up за вчера
+                    SectionCard(title: "Yesterday follow-up") {
+                        if let f = vm.followUp {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Protein: \(statusMark(f.proteinHit))")
+                                Text("Steps: \(statusMark(f.stepsHit))")
+                                Text("Sleep: \(statusMark(f.sleepHit))")
+                                Text("Training: \(statusMark(f.trainingDone))")
+                            }
+                            .font(.subheadline)
+                        } else {
+                            Text("No follow-up yet.")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
                 .padding(16)
                 .refreshable {
@@ -286,5 +302,13 @@ public struct DailyCoachScreen: View {
         let m = sec / 60
         let s = sec % 60
         return String(format: "%d:%02d", m, s)
+    }
+
+    private func statusMark(_ value: Bool?) -> String {
+        switch value {
+        case true: return "✅"
+        case false: return "❌"
+        case nil: return "—"
+        }
     }
 }

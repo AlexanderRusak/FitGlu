@@ -2,25 +2,43 @@ import SwiftUI
 
 @main
 struct FitGluApp: App {
+
+    //--- Сервисы
+    private let hkAuth = HealthKitAuthorizationManager()
+    @StateObject private var settings = AppSettingsStore()
+
+    //--- Инициализация ― выполняется один раз
     init() {
         @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-        // Этот код выполнится при запуске приложения.
-        print("iPhone: FitGluApp init — приложение запущено!")
-        
-        // Если у вас есть класс PhoneConnectivityProvider:
+        print("📱 FitGluApp launched")
+
+        // 📡 Watch-connectivity (если нужен)
         _ = PhoneConnectivityProvider.shared
-        
-        GlucoseDataManager.shared.requestAuthorization { success in
-            if success {
-                GlucoseDataManager.shared.subscribeGlucose()
+
+        // 🔵 Glucose (CGM)
+        GlucoseDataManager.shared.requestAuthorization { ok in
+            if ok { GlucoseDataManager.shared.subscribeGlucose() }
+        }
+
+        // ❤️ Workouts + Heart-Rate
+        hkAuth.requestAuthorization { ok, err in
+            if ok {
+                print("✅ HealthKit authorised (workouts + HR)")
+            } else {
+                print("❌ HealthKit auth failed:", err?.localizedDescription ?? "-")
             }
         }
     }
-    
+
+    //--- UI
     var body: some Scene {
         WindowGroup {
             MainTabView()
+                .environmentObject(settings)
+                .onAppear {
+                    // безопасно обращаться к HealthKit-провайдерам
+                    // (авторизация уже запрошена в init)
+                }
         }
     }
 }
-
